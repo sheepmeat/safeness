@@ -1249,6 +1249,65 @@ void parseRadarPacket(uint8_t *buf, int len) {
                             <!-- Injected by JS -->
                         </div>
                     </div>
+
+                    <!-- On-Device AI Integration Strategy Card -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div class="flex justify-between items-center border-b border-embed-border pb-3">
+                            <div>
+                                <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-cyan/10 text-embed-cyan border border-embed-cyan/20 font-bold font-mono">Edge Intelligence Strategy</span>
+                                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mt-1.5">
+                                    <i class="fa-solid fa-microchip text-embed-cyan"></i> 라즈베리파이 온디바이스 AI 데이터 분석 및 활용 방안
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-1">밀폐공간 데이터를 단순 룰 기반을 넘어 온디바이스 AI로 정밀 분석하기 위한 세부 구현 전략입니다. 보고서 보강 시 핵심 기술로 추가하십시오.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Column 1: Models & Pipeline -->
+                            <div class="space-y-3">
+                                <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
+                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-network-wired text-embed-purple"></i> 1. 시계열 모델 및 경량화 추론 엔진
+                                    </h4>
+                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
+                                        - <strong>1D-CNN / LSTM 이상 생체 신호 감지</strong>: mmWave 레이더의 60GHz 생체 파형을 분석하여 실신, 수면 무호흡(Apnea) 등 응급 생체 패턴을 실시간 인지합니다.<br>
+                                        - <strong>TFLite / ONNX 양자화(Quantization)</strong>: FP16 또는 INT8 양자화를 적용해 모델 크기를 90% 이상 줄이고, 라즈베리파이 5의 쿼드코어 CPU에서 추론 속도를 20ms 내외로 최적화합니다.
+                                    </p>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
+                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-gears text-embed-blue"></i> 2. 융합 피처 엔지니어링 (Multi-Sensor Features)
+                                    </h4>
+                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
+                                        - <strong>시계열 파동 피처 추출</strong>: 최근 30초 슬라이딩 윈도우 내에서 호흡수 평균, 분산, 주파수 도메인 FFT Peak 에너지를 추출해 학습 입력값으로 활용합니다.<br>
+                                        - <strong>이종 센서 결합</strong>: CO2 유해가스 축적 가속도(미분값)와 PIR 재실 지속시간, MLX90640 열화상의 인체 열 분포 변화율을 단일 피처 벡터로 병합합니다.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Column 2: Pipeline & Fail-safe -->
+                            <div class="space-y-3">
+                                <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
+                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-line text-embed-green"></i> 3. 엣지 AI 분석 파이프라인 (Data Pipeline)
+                                    </h4>
+                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
+                                        - <strong>1초 주기 비동기 추론</strong>: FastAPI 백엔드 리스너 내에서 센서 데이터를 수집하는 즉시 백그라운드 스레드에서 TFLite 인터프리터를 가동해 추론 결과를 연산합니다.<br>
+                                        - <strong>SQLite 연동 로깅</strong>: 감지된 행동 패턴 분류(정상, 정지 잔류, 가스 누출 의심, 생체 이상) 결과를 타임스탬프와 함께 로컬 DB에 자동 적재해 예측 정밀도를 모니터링합니다.
+                                    </p>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
+                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-shield-halved text-embed-rose"></i> 4. AI 추론 예외 및 실시간 폴백(Fallback)
+                                    </h4>
+                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
+                                        - <strong>룰 기반 이중 보장(Failsafe)</strong>: 센서 노이즈나 메모리 누수로 AI 추론 루프가 100ms 이상 지연되거나 예외가 발생할 경우, 사전에 정의된 물리 임계값(CO2 > 1000ppm 등) 룰 기반 엔진이 비상 격발됩니다.<br>
+                                        - <strong>워치독 감시</strong>: AI 스레드 작동 유무를 메인 감시 데몬이 주기적으로 확인하여 정지 시 스레드를 즉시 재시작합니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Column: Action Plan for Track D (4 cols) -->
