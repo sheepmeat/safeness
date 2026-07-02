@@ -149,6 +149,9 @@
             <button onclick="switchTab('predev')" id="tab-btn-predev" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
                 <i class="fa-solid fa-hourglass-half text-sm"></i> 6. 배송 대기 개발 가이드
             </button>
+            <button onclick="switchTab('docreview')" id="tab-btn-docreview" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
+                <i class="fa-solid fa-file-shield text-sm"></i> 7. 중간계획서 검토 & 지적사항
+            </button>
         </div>
     </nav>
 
@@ -1223,6 +1226,80 @@ void parseRadarPacket(uint8_t *buf, int len) {
             </div>
         </section>
 
+        <!-- ==================== TAB 7: DOCUMENTATION REVIEW & ISSUE TRACKER ==================== -->
+        <section id="tab-content-docreview" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Document Summary & Issue Tracker (8 cols) -->
+                <div class="lg:col-span-8 space-y-6">
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div class="flex justify-between items-center border-b border-embed-border pb-3">
+                            <div>
+                                <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-rose/10 text-embed-rose border border-embed-rose/20 font-bold font-mono">Document Quality Assurance</span>
+                                <h2 class="text-base font-bold text-slate-800 flex items-center gap-2 mt-1.5">
+                                    <i class="fa-solid fa-file-circle-exclamation text-embed-rose"></i> SafeNest 중간계획서 검토 결과 및 피드백
+                                </h2>
+                                <p class="text-xs text-slate-500 leading-relaxed mt-1">
+                                    `SafeNest_중간계획서_0702.docx` 파일 분석 결과 검출된 핵심 지적사항 및 보강 가이드라인입니다. 본선 및 예선 심사 기준에 맞추어 보완이 필수적입니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Feedback List -->
+                        <div class="space-y-3 font-sans" id="docreview-issue-list">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Action Plan for Track D (4 cols) -->
+                <div class="lg:col-span-4 glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="border-b border-embed-border pb-3 mb-4">
+                            <span class="text-[9px] font-mono font-bold text-embed-purple bg-embed-purple/10 px-2 py-0.5 rounded border border-embed-purple/20 uppercase">TRACK D TASK</span>
+                            <h3 class="text-sm font-bold text-slate-800 mt-1.5">문서 보강 우선순위 가이드</h3>
+                        </div>
+
+                        <div class="space-y-4 text-xs text-slate-600 font-medium leading-relaxed">
+                            <p>
+                                Track D(문서·자료조사) 담당자는 본 검토 결과를 참조하여 다음 순서로 중간계획서 워드 파일을 수정해야 합니다.
+                            </p>
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2">
+                                <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-embed-cyan"></span> 1순위: 비교표 및 일정 보강
+                                </h4>
+                                <p class="text-[10.5px] text-slate-500 font-medium">
+                                    비교표(Table 5)의 빈 칸을 완벽히 채우고, 7월 2주차에 멈춰 있는 추진일정 테이블을 8월 말 접수 완료 시기까지 연장해 복구합니다.
+                                </p>
+                            </div>
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2">
+                                <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-embed-purple"></span> 2순위: 수식 및 사양 구체화
+                                </h4>
+                                <p class="text-[10.5px] text-slate-500 font-medium">
+                                    위험도 점수화 알고리즘의 융합 산출 공식($R = \sum w_i S_i$)을 구체적으로 설명하고 라즈베리파이 핀맵 정보를 명기합니다.
+                                </p>
+                            </div>
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2">
+                                <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-embed-amber"></span> 3순위: 기본 텍스트 채우기
+                                </h4>
+                                <p class="text-[10.5px] text-slate-500 font-medium">
+                                    예상 문제점 및 대응 방안 단락이 제목만 있고 비어 있으므로, 표 6의 내용을 본문 서술형으로 변환해 상세 기재합니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-embed-border space-y-2">
+                        <div class="flex justify-between items-center text-[10px] font-mono">
+                            <span class="text-slate-400">문서 최종 검토 시각:</span>
+                            <span class="font-bold text-embed-rose">2026-07-02 16:17</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Modal for WBS Weekly Details & To-Do List Checkboard -->
@@ -1773,7 +1850,8 @@ void parseRadarPacket(uint8_t *buf, int len) {
             wbsProgress: [100, 0, 0, 0, 0, 0, 0, 0],
             wbsTodos: {}, // ADDED: Map for tracking checked wbs todos like 'w0_todo_3': true
             predevTodos: {},
-            predevProgress: 0
+            predevProgress: 0,
+            docreviewTodos: {}
         };
 
         // --- CHARTS INSTANCES ---
@@ -1840,6 +1918,9 @@ void parseRadarPacket(uint8_t *buf, int len) {
             if (typeof platformState.predevProgress !== 'number') {
                 platformState.predevProgress = 0;
             }
+            if (!platformState.docreviewTodos || typeof platformState.docreviewTodos !== 'object') {
+                platformState.docreviewTodos = {};
+            }
             if (!platformState.memoryData) platformState.memoryData = [210, 230, 240, 246, 246];
             if (!platformState.powerData) platformState.powerData = [110, 95, 88, 85, 82];
         }
@@ -1853,6 +1934,7 @@ void parseRadarPacket(uint8_t *buf, int len) {
             platformState.wbsTodos = {};
             platformState.predevTodos = {};
             platformState.predevProgress = 0;
+            platformState.docreviewTodos = {};
             platformState.memoryData = [210, 230, 240, 246, 246];
             platformState.powerData = [110, 95, 88, 85, 82];
         }
@@ -1899,6 +1981,7 @@ void parseRadarPacket(uint8_t *buf, int len) {
             document.getElementById('tab-content-resource').classList.add('hidden');
             document.getElementById('tab-content-failsafe').classList.add('hidden');
             document.getElementById('tab-content-predev').classList.add('hidden');
+            document.getElementById('tab-content-docreview').classList.add('hidden');
             
             document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
 
@@ -1922,6 +2005,8 @@ void parseRadarPacket(uint8_t *buf, int len) {
                 renderWbsRoadmap();
             } else if (tabId === 'predev') {
                 renderPreDevGuide();
+            } else if (tabId === 'docreview') {
+                renderDocReview();
             }
         }
 
@@ -2411,6 +2496,57 @@ void parseRadarPacket(uint8_t *buf, int len) {
             platformState.predevTodos[todoId] = chk.checked;
             saveStateSilently();
             renderPreDevGuide();
+        }
+
+        // --- TAB 7: DOCUMENTATION REVIEW ---
+        const DOCREVIEW_ISSUES = [
+            { id: "issue_0", severity: "HIGH", type: "문서 정합성", title: "대회 명칭 및 주최측 정보 불일치", desc: "중간계획서 머리글에는 '제5회 창의혁신 공모전'으로 기재되어 있으나, 시스템 대시보드 설계 상에는 '제24회 임베디드SW경진대회'로 기입되어 상호 불일치합니다. 지원하고자 하는 대회명으로 정합성을 통일하여 신뢰도를 확보하십시오." },
+            { id: "issue_1", severity: "HIGH", type: "내용 보완", title: "비교표(Table 5) 데이터 누락 및 공백 방치", desc: "경쟁 분석 비교표(Table 5)에서 스마트워치 및 SafeNest의 '사생활 보호', '다중센서 융합', '착용 불필요' 항목이 공백으로 비어 있습니다. 표의 완성도 제고를 위해 빈칸을 채워 레이아웃 손상을 해결하십시오." },
+            { id: "issue_2", severity: "HIGH", type: "진행 계획", title: "추진 일정표(Table 7) 범위 단축 오류", desc: "SafeNest 프로젝트 전체 WBS는 8월 말 예선 제출을 목표로 하는 7주차 이상 장기 로드맵이지만, 일정표(Table 7)는 7월 2주차에 멈춰 있어 하반기 일정이 유실되었습니다. 8월 말까지 표를 연장하여 작성하십시오." },
+            { id: "issue_3", severity: "MEDIUM", type: "인적 구성", title: "역할분담(Table 8) 이름란 미완성 방치", desc: "역할분담 리스트에서 팀원 실명이 '________' 밑줄 기호 상태로 방치되어 있어 제출 규격을 충족하지 못합니다. R&R Matrix 계획에 근거하여 실제 팀원의 이름을 명확하게 기입하십시오." },
+            { id: "issue_4", severity: "MEDIUM", type: "기술 분석", title: "위험도 산출 가중치 수식의 정량적 서술 결여", desc: "위험도 점수화 R 알고리즘을 단순 텍스트로만 서술하고 공식의 구체적인 변수나 산출 예시가 빠져 있습니다. 평가 심사관의 이해를 돕기 위해 위험도 가중 합산 수식과 융합 지표 매핑 표를 추가 기재하십시오." },
+            { id: "issue_5", severity: "MEDIUM", type: "예외 처리", title: "예상 문제점 및 대응 방안 본문 누락", desc: "4장 5절 '예상 문제점 및 대응 방안' 본문 영역에 텍스트가 존재하지 않고 바로 표로 이어집니다. 문제 상황별 해결 절차를 설명하는 본문 요약 단락을 추가하여 공백을 해소하십시오." },
+            { id: "issue_6", severity: "LOW", type: "하드웨어", title: "하드웨어 블록도 내 결선 정보(GPIO 핀 맵) 생략", desc: "그림 2의 하드웨어 블록도에 센서 인터페이스 사양만 있고 구체적인 물리 연결 핀이 표시되지 않았습니다. 라즈베리파이 5 GPIO 핀 매핑 사양을 도식화하여 추가하십시오." }
+        ];
+
+        function renderDocReview() {
+            const listContainer = document.getElementById('docreview-issue-list');
+            if(!listContainer) return;
+            
+            listContainer.innerHTML = '';
+            
+            DOCREVIEW_ISSUES.forEach(issue => {
+                const isChecked = !!platformState.docreviewTodos?.[issue.id];
+                const sevColor = 
+                    issue.severity === 'HIGH' ? 'bg-red-50 text-red-700 border-red-200' :
+                    issue.severity === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                    'bg-slate-50 text-slate-700 border-slate-200';
+                    
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-xl border ${isChecked ? 'border-embed-green/30 bg-embed-green/5' : 'border-embed-border bg-white'} flex items-start gap-3 transition duration-150`;
+                item.innerHTML = `
+                    <input type="checkbox" id="${issue.id}" ${isChecked ? 'checked' : ''} onchange="toggleDocReviewTodo('${issue.id}')" class="mt-1 w-4 h-4 text-embed-rose rounded border-slate-300 focus:ring-embed-rose">
+                    <div class="space-y-1.5 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <label for="${issue.id}" class="text-xs font-bold text-slate-800 cursor-pointer ${isChecked ? 'line-through text-slate-400' : ''}">${issue.title}</label>
+                            <span class="text-[8px] px-1.5 py-0.5 rounded border font-mono font-bold ${sevColor}">${issue.severity}</span>
+                            <span class="text-[8px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 font-mono font-bold">${issue.type}</span>
+                        </div>
+                        <p class="text-[10.5px] text-slate-500 leading-normal font-medium">${issue.desc}</p>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function toggleDocReviewTodo(issueId) {
+            if(!platformState.docreviewTodos) {
+                platformState.docreviewTodos = {};
+            }
+            const chk = document.getElementById(issueId);
+            platformState.docreviewTodos[issueId] = chk.checked;
+            saveStateSilently();
+            renderDocReview();
         }
     </script>
 </body>
