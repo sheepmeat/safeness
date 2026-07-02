@@ -146,6 +146,9 @@
             <button onclick="switchTab('failsafe')" id="tab-btn-failsafe" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
                 <i class="fa-solid fa-shield-halved text-sm"></i> 5. 리스크 & KPT 회고 보드
             </button>
+            <button onclick="switchTab('predev')" id="tab-btn-predev" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
+                <i class="fa-solid fa-hourglass-half text-sm"></i> 6. 배송 대기 개발 가이드
+            </button>
         </div>
     </nav>
 
@@ -1053,6 +1056,186 @@ void parseRadarPacket(uint8_t *buf, int len) {
             </div>
         </section>
 
+        <!-- ==================== TAB 6: PRE-ARRIVAL DEVELOPMENT GUIDE ==================== -->
+        <section id="tab-content-predev" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Guide Summary and Pre-Dev Todo Checklist (5 cols) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div>
+                            <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-cyan/10 text-embed-cyan border border-embed-cyan/20 font-bold font-mono">Pre-Arrival Development Strategy</span>
+                            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2 mt-1.5">
+                                <i class="fa-solid fa-hourglass-half text-embed-cyan"></i> 부품 배송 대기 선행 개발 가이드
+                            </h2>
+                            <p class="text-xs text-slate-500 leading-relaxed mt-1">
+                                해외 배송 대기 기간(W0~W1, 약 7~10일) 동안 하드웨어 실물이 없어도 시스템 전체 파이프라인의 100% 통합을 달성하기 위한 구체적인 To-Do 리스트입니다.
+                            </p>
+                        </div>
+
+                        <!-- Progress Bar Card -->
+                        <div class="bg-slate-50 border border-embed-border rounded-xl p-4 space-y-2">
+                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                                <span>선행 개발 진행율</span>
+                                <span class="font-bold text-embed-cyan" id="predev-progress-text">0% 완료</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div class="bg-embed-cyan h-2 rounded-full transition-all duration-300" id="predev-progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Checkbox Container -->
+                        <div class="space-y-3 font-sans" id="predev-todo-list"></div>
+                    </div>
+
+                    <!-- Hardware Simulator Setup guidelines -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4 text-xs text-slate-600 leading-relaxed font-medium">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-laptop-code text-embed-purple"></i> 왜 배송 전 에뮬레이터 코드가 필요한가?
+                        </h3>
+                        <p>
+                            임베디드 프로젝트 진행 시 가장 빈번하게 일어나는 지연 사유는 **"부품이 늦게 와서 테스트를 시작하지 못했다"**는 핑계입니다. ESP32-S3에서 센서 데이터 형태를 가상으로 송출하는 Mock 펌웨어 코드를 첫 주에 먼저 구현해두면:
+                        </p>
+                        <ul class="space-y-1.5 list-disc pl-4 text-slate-500 text-[11px]">
+                            <li>라즈베리파이의 SQLite 데이터베이스 스키마 및 DB 삽입 검증 완료</li>
+                            <li>Mosquitto MQTT 브로커 전송 속도 및 Wi-Fi 세션 강제 단절 시 재접속 로직 테스트 완료</li>
+                            <li>가상 데이터를 이용해 대시보드 뷰어의 실시간 차트 렌더링 검증 완료</li>
+                        </ul>
+                        <p class="text-[10px] text-slate-400 font-mono mt-2">
+                            * 결과적으로 부품이 도착하는 날 배선만 하면 즉시 End-to-End 동작이 완료됩니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Mock Source Code Snippets (7 cols) -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- ESP32-S3 Mock Sensor Publisher Snippet -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i class="fa-solid fa-terminal text-embed-green"></i> 1. ESP32-S3 가상 센서 MQTT 송신 펌웨어 (C++)</span>
+                                <span class="text-[9.5px] font-mono text-slate-400">ESP32-S3 Code</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">센서가 없어도 SCD40 가스 센서와 MR60BHA1 심박 데이터를 가상 생성해 1초마다 전송하는 코드</p>
+                        </div>
+                        <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[9.5px] text-embed-green overflow-x-auto leading-relaxed font-mono">
+#include &lt;WiFi.h&gt;
+#include &lt;PubSubClient.h&gt;
+#include &lt;ArduinoJson.h&gt;
+
+const char* ssid = "SafeNest_AP";
+const char* password = "safenestpassword";
+const char* mqtt_server = "192.168.1.10"; // Raspberry Pi IP Address
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void setup() {
+    Serial.begin(115200);
+    WiFi.begin(ssid, password);
+    client.setServer(mqtt_server, 1883);
+}
+
+void loop() {
+    if (!client.connected()) {
+        while (!client.connected()) {
+            if (client.connect("SafeNest_Edge_Node")) {
+                Serial.println("MQTT Connected!");
+            } else {
+                delay(5000);
+            }
+        }
+    }
+    client.loop();
+
+    // 1초 주기로 가상 센서 데이터 에뮬레이션
+    static unsigned long lastMsg = 0;
+    if (millis() - lastMsg > 1000) {
+        lastMsg = millis();
+
+        StaticJsonDocument&lt;256&gt; doc;
+        // 미니어처 챔버 가상 시나리오: CO2의 점진적 누출 모사
+        static int co2_val = 450;
+        co2_val += random(-10, 50); // 서서히 누출 상승
+        if(co2_val > 5000) co2_val = 450; 
+
+        doc["co2"] = co2_val;
+        doc["heartbeat"] = random(70, 85); // 60GHz 레이더 심박 모사
+        doc["breathing"] = random(14, 20); // 60GHz 레이더 호흡 모사
+        doc["presence"] = true;            // 재실 상태
+        doc["temp"] = random(360, 370) / 10.0; // 열화상 기준 체온 36.5도 모사
+
+        char buffer[256];
+        serializeJson(doc, buffer);
+        client.publish("safenest/edge/telemetry", buffer);
+        Serial.printf("Mock Data Sent: %s\n", buffer);
+    }
+}</pre>
+                    </div>
+
+                    <!-- Raspberry Pi 5 Gateway DB Listener Snippet -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i class="fa-solid fa-terminal text-embed-purple"></i> 2. 라즈베리파이 MQTT 데이터 수집 리스너 (Python)</span>
+                                <span class="text-[9.5px] font-mono text-slate-400">Raspberry Pi 5 Python Code</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">MQTT 토픽을 구독하여 수신한 가상 데이터를 SQLite DB에 실시간 적재하는 백그라운드 데몬</p>
+                        </div>
+                        <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[9.5px] text-embed-green overflow-x-auto leading-relaxed font-mono">
+import paho.mqtt.client as mqtt
+import sqlite3
+import json
+import time
+
+DB_PATH = "safenest_vault.db"
+
+# SQLite 데이터베이스 테이블 선구축
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS telemetry (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            co2 INTEGER,
+            heartbeat INTEGER,
+            breathing INTEGER,
+            presence BOOLEAN,
+            temperature REAL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def on_message(client, userdata, message):
+    try:
+        payload = json.loads(message.payload.decode("utf-8"))
+        print(f"Received data: {payload}")
+        
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO telemetry (co2, heartbeat, breathing, presence, temperature)
+            VALUES (?, ?, ?, ?, ?)
+        """, (payload["co2"], payload["heartbeat"], payload["breathing"], 
+              payload["presence"], payload["temp"]))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error parsing or storing message: {e}")
+
+init_db()
+client = mqtt.Client()
+client.on_message = on_message
+client.connect("localhost", 1883)
+client.subscribe("safenest/edge/telemetry")
+print("Raspberry Pi MQTT Listener listening for telemetry data...")
+client.loop_forever()</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Modal for WBS Weekly Details & To-Do List Checkboard -->
@@ -1601,7 +1784,9 @@ void parseRadarPacket(uint8_t *buf, int len) {
             memoryData: [210, 230, 240, 246, 246], // Historical ROM/RAM values in KB
             powerData: [110, 95, 88, 85, 82],     // Power consumption trend in mA
             wbsProgress: [100, 0, 0, 0, 0, 0, 0, 0],
-            wbsTodos: {} // ADDED: Map for tracking checked wbs todos like 'w0_todo_3': true
+            wbsTodos: {}, // ADDED: Map for tracking checked wbs todos like 'w0_todo_3': true
+            predevTodos: {},
+            predevProgress: 0
         };
 
         // --- CHARTS INSTANCES ---
@@ -1662,6 +1847,12 @@ void parseRadarPacket(uint8_t *buf, int len) {
             if (!platformState.wbsTodos || typeof platformState.wbsTodos !== 'object') {
                 platformState.wbsTodos = {};
             }
+            if (!platformState.predevTodos || typeof platformState.predevTodos !== 'object') {
+                platformState.predevTodos = {};
+            }
+            if (typeof platformState.predevProgress !== 'number') {
+                platformState.predevProgress = 0;
+            }
             if (!platformState.memoryData) platformState.memoryData = [210, 230, 240, 246, 246];
             if (!platformState.powerData) platformState.powerData = [110, 95, 88, 85, 82];
         }
@@ -1673,6 +1864,8 @@ void parseRadarPacket(uint8_t *buf, int len) {
             platformState.kpts = JSON.parse(JSON.stringify(INITIAL_KPTS));
             platformState.wbsProgress = [100, 0, 0, 0, 0, 0, 0, 0];
             platformState.wbsTodos = {};
+            platformState.predevTodos = {};
+            platformState.predevProgress = 0;
             platformState.memoryData = [210, 230, 240, 246, 246];
             platformState.powerData = [110, 95, 88, 85, 82];
         }
@@ -1718,6 +1911,7 @@ void parseRadarPacket(uint8_t *buf, int len) {
             document.getElementById('tab-content-wiring').classList.add('hidden');
             document.getElementById('tab-content-resource').classList.add('hidden');
             document.getElementById('tab-content-failsafe').classList.add('hidden');
+            document.getElementById('tab-content-predev').classList.add('hidden');
             
             document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
 
@@ -1739,6 +1933,8 @@ void parseRadarPacket(uint8_t *buf, int len) {
                 renderKPTs();
             } else if (tabId === 'vmodel') {
                 renderWbsRoadmap();
+            } else if (tabId === 'predev') {
+                renderPreDevGuide();
             }
         }
 
@@ -2163,6 +2359,50 @@ void parseRadarPacket(uint8_t *buf, int len) {
             platformState.kpts = platformState.kpts.filter(k => k.id !== id);
             renderKPTs();
             saveStateSilently();
+        }
+
+        // --- TAB 6: PRE-DEV GUIDE CHECKS ---
+        const PREDEV_TODOS = [
+            { id: "predev_0", title: "ESP32-S3용 가상 SCD40 & MR60BHA1 패킷 에뮬레이터 펌웨어 작성", desc: "실물 센서 없이도 1초 주기로 CO2 및 호흡수(bpm) 가상 패킷을 UART/I2C 버퍼 형태로 에뮬레이션하여 빌드해 둡니다." },
+            { id: "predev_1", title: "라즈베리파이 5 / 로컬 개발 PC 내 Mosquitto MQTT 브로커 셋업", desc: "FastAPI 데이터 가공 및 수집 리스너 컨테이너를 가동하여 로컬 환경에 End-to-End 통신 인프라를 우선 확립합니다." },
+            { id: "predev_2", title: "BLE 광고(Advertising) 데이터 Payload 프로토콜 포맷 확정 및 설계", desc: "출입 방향 ToF 판정 노드와 웨어러블 태그 간의 통신 패킷 구조(UUID, State Flag, Batt) 명세를 깃허브에 도큐멘테이션합니다." },
+            { id: "predev_3", title: "대회 예선 개발완료보고서(PPT) P1 ~ P4 페이지 초안 작성", desc: "본 설계 템플릿의 기기 레이아웃 캡처본 및 핀 맵 매핑 표를 삽입하여 문서 뼈대를 W0~W1에 미리 작성 완료합니다." }
+        ];
+
+        function renderPreDevGuide() {
+            const listContainer = document.getElementById('predev-todo-list');
+            if(!listContainer) return;
+            
+            listContainer.innerHTML = '';
+            let checkedCount = 0;
+            
+            PREDEV_TODOS.forEach(todo => {
+                const isChecked = !!platformState.predevTodos[todo.id];
+                if(isChecked) checkedCount++;
+                
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-xl border ${isChecked ? 'border-embed-green/30 bg-embed-green/5' : 'border-embed-border bg-slate-50'} flex items-start gap-3 transition duration-150`;
+                item.innerHTML = `
+                    <input type="checkbox" id="${todo.id}" ${isChecked ? 'checked' : ''} onchange="togglePreDevTodo('${todo.id}')" class="mt-1 w-4 h-4 text-embed-cyan rounded border-slate-300 focus:ring-embed-cyan">
+                    <div class="space-y-1">
+                        <label for="${todo.id}" class="text-xs font-bold text-slate-800 cursor-pointer ${isChecked ? 'line-through text-slate-400' : ''}">${todo.title}</label>
+                        <p class="text-[10.5px] text-slate-500 leading-normal font-medium">${todo.desc}</p>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+            
+            const progress = PREDEV_TODOS.length > 0 ? Math.round((checkedCount / PREDEV_TODOS.length) * 100) : 0;
+            platformState.predevProgress = progress;
+            document.getElementById('predev-progress-text').innerText = `${progress}% 완료`;
+            document.getElementById('predev-progress-bar').style.width = `${progress}%`;
+        }
+
+        function togglePreDevTodo(todoId) {
+            const chk = document.getElementById(todoId);
+            platformState.predevTodos[todoId] = chk.checked;
+            saveStateSilently();
+            renderPreDevGuide();
         }
     </script>
 </body>
