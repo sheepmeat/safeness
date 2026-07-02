@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeNest - 임베디드 V-모델 프로젝트 공학 설계 및 검증 플랫폼</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans KR', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        embed: {
+                            bg: '#f8fafc',
+                            card: '#ffffff',
+                            cardLight: '#f1f5f9',
+                            border: '#e2e8f0',
+                            borderActive: '#cbd5e1',
+                            cyan: '#0891b2',
+                            purple: '#7c3aed',
+                            rose: '#e11d48',
+                            green: '#16a34a',
+                            amber: '#d97706',
+                            blue: '#2563eb'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
+            background-size: 24px 24px;
+            zoom: 1.2; /* 20% Zoom In globally for better visibility */
+            -moz-transform: scale(1.2); /* Firefox fallback */
+            -moz-transform-origin: top center;
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 8px -1px rgba(15, 23, 42, 0.03);
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 15px rgba(8, 145, 178, 0.15);
+            border-color: rgba(8, 145, 178, 0.4);
+        }
+
+        .step-active {
+            border-color: #0891b2;
+            background-color: rgba(8, 145, 178, 0.05);
+            box-shadow: 0 0 12px rgba(8, 145, 178, 0.1);
+        }
+
+        /* Technical schematic grids */
+        .blueprint-bg {
+            background-color: #f1f5f9;
+            background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased overflow-x-hidden">
+
+    <!-- Header Navigation & Timing D-Day (Light Theme) -->
+    <header class="border-b border-embed-border bg-white/95 sticky top-0 z-50 backdrop-blur-md shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <!-- Logo & Meta -->
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-embed-cyan to-embed-purple flex items-center justify-center shadow-md shadow-embed-cyan/20">
+                    <i class="fa-solid fa-microchip text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-md font-bold tracking-tight text-slate-900 font-mono">SAFENEST : Project Execution Core</h1>
+                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-cyan/10 text-embed-cyan border border-embed-cyan/20 font-semibold font-mono">Ver 3.1</span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">제24회 임베디드SW경진대회 대상 목표 SafeNest 개발 프로세스 총괄 매니저</p>
+                </div>
+            </div>
+
+            <!-- Global Actions & D-Day status -->
+            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end font-mono">
+                <div class="bg-slate-50 border border-embed-border rounded-lg px-3 py-1 text-center">
+                    <span class="text-[9px] text-slate-400 block">예선 마감 (2026.09.03)</span>
+                    <span class="text-xs font-bold text-embed-rose" id="dday-text"><i class="fa-regular fa-clock mr-1"></i> D-63</span>
+                </div>
+                
+                <div class="bg-slate-50 border border-embed-border rounded-lg px-3 py-1 text-center">
+                    <span class="text-[9px] text-slate-400 block">V-모델 종합 검증도</span>
+                    <span class="text-xs font-bold text-embed-green" id="vmodel-progress">0% Verified</span>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="resetData()" class="px-3 py-1.5 border border-embed-border hover:border-embed-rose/40 hover:bg-embed-rose/5 text-xs text-slate-600 hover:text-embed-rose rounded-lg transition duration-150">
+                        <i class="fa-solid fa-rotate-left"></i> 초기화
+                    </button>
+                    <button onclick="saveAllData()" class="px-4 py-1.5 bg-embed-cyan hover:bg-embed-cyan/90 text-white text-xs font-bold rounded-lg transition duration-150 shadow-sm flex items-center gap-1.5 font-sans">
+                        <i class="fa-solid fa-floppy-disk"></i> 설계 데이터 저장
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN PLATFORM NAVIGATION (5 TAB MENU) -->
+    <nav class="max-w-7xl mx-auto px-4 pt-6">
+        <div class="flex flex-wrap bg-white p-1 rounded-xl border border-embed-border shadow-sm gap-1">
+            <button onclick="switchTab('devices')" id="tab-btn-devices" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg bg-embed-cyan text-white flex items-center justify-center gap-2 transition duration-150">
+                <i class="fa-solid fa-cube text-sm"></i> 1. 기기 물리 구조 & Layout
+            </button>
+            <button onclick="switchTab('vmodel')" id="tab-btn-vmodel" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
+                <i class="fa-solid fa-diagram-project text-sm"></i> 2. WBS 로드맵 & 득점전략
+            </button>
+            <button onclick="switchTab('wiring')" id="tab-btn-wiring" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
+                <i class="fa-solid fa-circle-nodes text-sm"></i> 3. 핀맵 & 팀원 역할 분담
+            </button>
+            <button onclick="switchTab('resource')" id="tab-btn-resource" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
+                <i class="fa-solid fa-chart-line text-sm"></i> 4. 리소스 및 HIL 검증 분석
+            </button>
+            <button onclick="switchTab('failsafe')" id="tab-btn-failsafe" class="flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150">
+                <i class="fa-solid fa-shield-halved text-sm"></i> 5. 리스크 & KPT 회고 보드
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- ==================== TAB 1: DEVICE HW STRUCTURE & LAYOUT ==================== -->
+        <section id="tab-content-devices" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Device Selector & Blueprint Schematic (8 cols) -->
+                <div class="lg:col-span-8 glass-card rounded-2xl p-6 space-y-4">
+                    <div class="flex justify-between items-center pb-2 border-b border-embed-border">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-drafting-compass text-embed-cyan"></i> 하드웨어 기기 물리 설계 도면 (HW Schematic & Assembly Blueprint)
+                            </h2>
+                            <p class="text-xs text-slate-500">각 핵심 디바이스의 물리 외관 조립 레이아웃 및 센서 장착 하우징 단면도</p>
+                        </div>
+                        <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                            <button onclick="selectDeviceBlueprint('internal')" id="dev-btn-internal" class="px-3 py-1 bg-white shadow-sm text-[10px] font-bold rounded-md text-embed-cyan">내부 감지 노드</button>
+                            <button onclick="selectDeviceBlueprint('entrance')" id="dev-btn-entrance" class="px-3 py-1 text-[10px] font-bold rounded-md text-slate-500">출입구 판별 노드</button>
+                            <button onclick="selectDeviceBlueprint('wearable')" id="dev-btn-wearable" class="px-3 py-1 text-[10px] font-bold rounded-md text-slate-500">웨어러블 안전 태그</button>
+                        </div>
+                    </div>
+
+                    <!-- Schematic Display Frame -->
+                    <div class="blueprint-bg border border-embed-border rounded-xl p-8 min-h-[380px] flex items-center justify-center relative overflow-hidden">
+                        <!-- Technical Blueprint Watermark -->
+                        <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
+                            <i class="fa-solid fa-compass-drafting text-[240px] text-slate-900"></i>
+                        </div>
+                        
+                        <div id="blueprint-graphics-container" class="w-full flex justify-center">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                        <span>* SCALE: 1:1 UNIT (mm)</span>
+                        <span>* HOUSING: ABS 3D Printed (Flammability Rating UL94-V0)</span>
+                    </div>
+                </div>
+
+                <!-- Hardware Specifications & Description (4 cols) -->
+                <div class="lg:col-span-4 glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="border-b border-embed-border pb-3 mb-4">
+                            <span class="text-[9px] font-mono font-bold text-embed-cyan bg-embed-cyan/10 px-2 py-0.5 rounded border border-embed-cyan/20 uppercase" id="dev-spec-class">MAIN SENSOR NODE</span>
+                            <h3 class="text-sm font-bold text-slate-800 mt-1.5" id="dev-spec-title">내부 인체 감지 노드</h3>
+                        </div>
+
+                        <div class="space-y-4 text-xs" id="dev-spec-body">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-embed-border space-y-2">
+                        <div class="flex justify-between items-center text-[10px] font-mono">
+                            <span class="text-slate-400">인클로저 실장 보호등급:</span>
+                            <span class="font-bold text-embed-cyan">IP54 방적/방진</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] font-mono">
+                            <span class="text-slate-400">동작 주변 온도:</span>
+                            <span class="font-bold text-embed-cyan">-20℃ ~ 60℃</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SafeNest HW System Architecture & Physical Deployment Guide -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-embed-cyan"></i> SafeNest 하드웨어 분산 배치 및 토폴로지 가이드
+                </h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    본 시스템은 밀폐공간 내부의 가혹한 신호 환경을 감안하여 <strong>ESP32-S3 기반 메인 노드, ESP32 기반 출입구 노드, 그리고 작업자 휴대용 BLE 웨어러블 안전 태그</strong>가 다각적으로 상호작용하는 토폴로지를 취합니다.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-600 pt-2">
+                    <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-embed-cyan"></span> 내부 감지 노드 (메인)
+                        </h4>
+                        <p class="leading-relaxed font-medium">
+                            천장 정중앙에 설치되어 mmWave 레이더 파동의 지향각(120°)을 수직 확보합니다. CO₂ 센서 및 열화상 센서의 공기 흡입 통풍 구조를 일체화하고, 12V 릴레이 구동을 통해 외부 강력 오프라인 사이렌 및 환기 장치를 물리 제어합니다.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-embed-purple"></span> 출입구 감지 노드 (보조)
+                        </h4>
+                        <p class="leading-relaxed font-medium">
+                            맨홀 사다리 입구 또는 챔버 문 프레임 상부에 설치합니다. 2개의 이중 ToF 빔(VL53L1X)을 통로에 수직 배치하여 입장과 퇴장 순서를 정교하게 분석합니다. 또한 문 자석 센서(Reed Switch)로 물리적인 밀폐 밀봉 개폐 이벤트를 추적합니다.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-embed-amber"></span> 웨어러블 안전 태그 (작업자)
+                        </h4>
+                        <p class="leading-relaxed font-medium">
+                            작업 조끼 또는 헬멧 후면에 부착하는 40mm x 40mm 초소형 설계입니다. Wi-Fi 차단 시에도 BLE(Bluetooth Low Energy) 광고 채널을 통해 메인 감지기 및 출입구 스캐너와 신호를 중계하고, 촉각 진동 소자와 비상 SOS 텍트 버튼을 배치하여 전원 불안 상태에서도 즉각 경보를 수신합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADDED: SafeNest Device Data Flow Sequence (기기 유기적 작동 플로우 시퀀스) -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-embed-border pb-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-route text-embed-cyan"></i> SafeNest 다중 노드 기기 유기적 작동 플로우 및 데이터 흐름도
+                    </h3>
+                    <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-cyan/10 text-embed-cyan border border-embed-cyan/20 font-bold font-mono">Real-time Interaction Sequence</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                    현장에 분산 설치된 각 하드웨어 노드가 상호 통신하며 생명 신호를 융합 분석하고, 최종 대시보드 및 경보 장치로 전파되는 end-to-end 처리 시퀀스입니다.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 pt-2 text-xs">
+                    <!-- Step 1 -->
+                    <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2 relative hover:shadow-md transition">
+                        <div class="flex justify-between items-center">
+                            <span class="px-2 py-0.5 rounded text-[8.5px] font-bold bg-embed-cyan/15 text-embed-cyan font-mono border border-embed-cyan/30">Step 1</span>
+                            <i class="fa-solid fa-door-open text-embed-cyan text-sm"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800">1. 도어 개폐 및 입장 인식</h4>
+                        <p class="text-[10.5px] text-slate-500 leading-relaxed font-medium">
+                            작업자가 맨홀/탱크 진입 시 <strong>출입구 노드</strong>의 Reed Sw가 인터럽트를 격발하고, 이중 ToF 빔(VL53L1X)의 단선 순서를 해독하여 입장 인원을 <strong>+1 카운팅</strong>하고 실시간 스캔을 개시합니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2 relative hover:shadow-md transition">
+                        <div class="flex justify-between items-center">
+                            <span class="px-2 py-0.5 rounded text-[8.5px] font-bold bg-embed-purple/15 text-embed-purple font-mono border border-embed-purple/30">Step 2</span>
+                            <i class="fa-solid fa-lungs text-embed-purple text-sm"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800">2. 생체 신호 정밀 스캔</h4>
+                        <p class="text-[10.5px] text-slate-500 leading-relaxed font-medium">
+                            천장의 <strong>내부 감지 노드</strong>가 mmWave 레이더(MR60BHA1) 60GHz 주파수를 수직 방사해 정지 상태 인체의 미세 호흡(0.2~0.5Hz) 파동을 검측하고, MLX90640 열원으로 36.5°C 분포를 교차 검증합니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2 relative hover:shadow-md transition">
+                        <div class="flex justify-between items-center">
+                            <span class="px-2 py-0.5 rounded text-[8.5px] font-bold bg-embed-amber/15 text-embed-amber font-mono border border-embed-amber/30">Step 3</span>
+                            <i class="fa-solid wind text-embed-amber text-sm"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800">3. 가스 및 온습도 측정</h4>
+                        <p class="text-[10.5px] text-slate-500 leading-relaxed font-medium">
+                            SCD40 NDIR 센서가 밀폐 내부의 CO₂ 농도 추세를 10초 주기로 측정하며, CO 센서 및 BME680 VOC 센서가 대류 공기 내 유독가스 및 유기화합물 화학 농도를 동시 수집해 MCU에 갱신합니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2 relative hover:shadow-md transition">
+                        <div class="flex justify-between items-center">
+                            <span class="px-2 py-0.5 rounded text-[8.5px] font-bold bg-embed-blue/15 text-embed-blue font-mono border border-embed-blue/30">Step 4</span>
+                            <i class="fa-solid fa-server text-embed-blue text-sm"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800">4. MQTT 수집 및 퓨전 스코어</h4>
+                        <p class="text-[10.5px] text-slate-500 leading-relaxed font-medium">
+                            ESP32-S3가 다중 센싱값을 JSON 패킷으로 포장해 Wi-Fi로 <strong>라즈베리파이 게이트웨이</strong>로 송출합니다. 서버는 w1~w5 가중치 알고리즘을 실시간 연산해 종합 위험도 점수(R)를 산출합니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2 relative hover:shadow-md transition">
+                        <div class="flex justify-between items-center">
+                            <span class="px-2 py-0.5 rounded text-[8.5px] font-bold bg-embed-rose/15 text-embed-rose font-mono border border-embed-rose/30">Step 5</span>
+                            <i class="fa-solid fa-triangle-exclamation text-embed-rose text-sm"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800">5. 입체 비상 경보 격발</h4>
+                        <p class="text-[10.5px] text-slate-500 leading-relaxed font-medium">
+                            위험 임계값(R≥70) 도달 시, 즉시 로컬 12V 경광등/사이렌이 작동하고, 작업자 <strong>웨어러블 태그</strong>에 BLE 무선 패킷을 전달해 강한 비상 진동을 기동하며 Telegram SOS를 원격 전송합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: ROADMAP WBS & CRITERION STRATEGY ==================== -->
+        <section id="tab-content-vmodel" class="space-y-6 hidden">
+            <!-- V-Model Gates -->
+            <div class="glass-card rounded-2xl p-6 space-y-6">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-list text-embed-cyan"></i> V-모델 개발 절차 및 마일스톤 게이트웨이 (Gate Process Procedures)
+                    </h2>
+                    <p class="text-xs text-slate-500">각 게이트 단계별 진입 조건(Entry Criteria)과 완료 요건(Exit Criteria), 상세 진행 절차 명세서</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 relative py-2">
+                    <div onclick="selectVStep(1)" id="vstep-lg-1" class="p-3.5 rounded-xl border border-embed-cyan bg-embed-card cursor-pointer transition hover:border-embed-cyan step-active">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold text-embed-cyan font-mono bg-embed-cyan/10 px-2 py-0.5 rounded border border-embed-cyan/20">Gate 1</span>
+                            <input type="checkbox" id="gate-check-lg-1" class="w-3.5 h-3.5 rounded bg-white border-embed-border cursor-pointer text-embed-cyan" onchange="toggleGateLg(1, event)">
+                        </div>
+                        <h4 class="text-[11px] font-bold text-slate-700 mt-2">1. 요구사항/제약 정의</h4>
+                    </div>
+
+                    <div onclick="selectVStep(2)" id="vstep-lg-2" class="p-3.5 rounded-xl border border-embed-border bg-embed-card cursor-pointer transition hover:border-embed-cyan">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold text-embed-purple font-mono bg-embed-purple/10 px-2 py-0.5 rounded border border-embed-purple/20">Gate 2</span>
+                            <input type="checkbox" id="gate-check-lg-2" class="w-3.5 h-3.5 rounded bg-white border-embed-border cursor-pointer text-embed-purple" onchange="toggleGateLg(2, event)">
+                        </div>
+                        <h4 class="text-[11px] font-bold text-slate-700 mt-2">2. 공동 설계(핀맵)</h4>
+                    </div>
+
+                    <div onclick="selectVStep(3)" id="vstep-lg-3" class="p-3.5 rounded-xl border border-embed-border bg-embed-card cursor-pointer transition hover:border-embed-cyan">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold text-embed-amber font-mono bg-embed-amber/10 px-2 py-0.5 rounded border border-embed-amber/20">Gate 3</span>
+                            <input type="checkbox" id="gate-check-lg-3" class="w-3.5 h-3.5 rounded bg-white border-embed-border cursor-pointer text-embed-amber" onchange="toggleGateLg(3, event)">
+                        </div>
+                        <h4 class="text-[11px] font-bold text-slate-700 mt-2">3. 단위 구현</h4>
+                    </div>
+
+                    <div onclick="selectVStep(4)" id="vstep-lg-4" class="p-3.5 rounded-xl border border-embed-border bg-embed-card cursor-pointer transition hover:border-embed-cyan">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold text-embed-blue font-mono bg-embed-blue/10 px-2 py-0.5 rounded border border-embed-blue/20">Gate 4</span>
+                            <input type="checkbox" id="gate-check-lg-4" class="w-3.5 h-3.5 rounded bg-white border-embed-border cursor-pointer text-embed-blue" onchange="toggleGateLg(4, event)">
+                        </div>
+                        <h4 class="text-[11px] font-bold text-slate-700 mt-2">4. 단위 검증 (HIL)</h4>
+                    </div>
+
+                    <div onclick="selectVStep(5)" id="vstep-lg-5" class="p-3.5 rounded-xl border border-embed-border bg-embed-card cursor-pointer transition hover:border-embed-cyan">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold text-embed-green font-mono bg-embed-green/10 px-2 py-0.5 rounded border border-embed-green/20">Gate 5</span>
+                            <input type="checkbox" id="gate-check-lg-5" class="w-3.5 h-3.5 rounded bg-white border-embed-border cursor-pointer text-embed-green" onchange="toggleGateLg(5, event)">
+                        </div>
+                        <h4 class="text-[11px] font-bold text-slate-700 mt-2">5. 통합 신뢰성 검증</h4>
+                    </div>
+                </div>
+
+                <!-- Process Details Sheet -->
+                <div class="border border-embed-border rounded-xl p-6 bg-slate-50 space-y-6">
+                    <div class="flex items-center justify-between border-b border-embed-border pb-3">
+                        <h3 class="text-sm font-bold text-slate-800" id="proc-gate-title">Gate 1. 요구사항 및 물리 제약 정의</h3>
+                        <span class="text-[10px] font-mono text-embed-cyan bg-embed-cyan/10 border border-embed-cyan/20 px-2 py-0.5 rounded">절차 진척도 추적</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+                        <div class="space-y-3 bg-white p-4 rounded-xl border border-embed-border shadow-sm">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-sign-in text-embed-cyan"></i> 1단계 진입 기준 (Entry Criteria)
+                            </h4>
+                            <ul class="space-y-2 text-slate-500 font-medium" id="proc-entry-list"></ul>
+                        </div>
+
+                        <div class="space-y-3 bg-white p-4 rounded-xl border border-embed-border shadow-sm">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-tasks text-embed-purple"></i> 설계 상세 절차 (Procedures)
+                            </h4>
+                            <ol class="space-y-2 text-slate-500 list-decimal pl-4 font-medium" id="proc-steps-list"></ol>
+                        </div>
+
+                        <div class="space-y-3 bg-white p-4 rounded-xl border border-embed-border shadow-sm">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-sign-out text-embed-green"></i> 최종 완료 기준 (Exit Criteria)
+                            </h4>
+                            <ul class="space-y-2 text-slate-500 font-medium" id="proc-exit-list"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Process Console Terminal Drawer -->
+                <div class="border border-embed-border rounded-xl bg-slate-900 text-slate-300 p-5 font-mono text-xs space-y-3.5">
+                    <div class="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2">
+                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-embed-cyan"></span> <strong class="text-slate-200">Engineering Console</strong></span>
+                        <span class="text-[10px]" id="console-title">Gate 1</span>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div>
+                            <span class="text-embed-cyan font-bold">▶ 시스템 물리적 요건 정의:</span>
+                            <p class="text-slate-400 mt-1 leading-relaxed text-[11px]" id="console-desc"></p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <span class="text-embed-purple font-bold">▶ HW 리스크 관리 항목:</span>
+                                <ul class="list-disc pl-4 text-slate-400 mt-1 space-y-1 text-[11px]" id="console-hw"></ul>
+                            </div>
+                            <div>
+                                <span class="text-embed-green font-bold">▶ 최종 제출 및 게이트 산출물:</span>
+                                <ul class="list-disc pl-4 text-slate-400 mt-1 space-y-1 text-[11px]" id="console-outputs"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7-Week WBS Schedule & To-Do List Interactive Board -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-embed-cyan"></i> 주차별 마일스톤 WBS & 대화형 To-Do 리스트 트래커
+                    </h3>
+                    <p class="text-xs text-slate-500">
+                        각 주차 카드를 <strong>클릭(Click)</strong>하면 해당 주차에 수립된 세부적인 할 일(To-Do) 목록 팝업이 표시되며, 체크 결과에 따라 진척도가 실시간으로 자동 갱신됩니다.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2" id="wbs-cards-container">
+                    <!-- Injected dynamically by JS -->
+                </div>
+            </div>
+
+            <!-- 24th ESW Contest Scoring Strategy & Evaluation Criteria -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Evaluation Criteria Table (8 cols) -->
+                <div class="lg:col-span-8 glass-card rounded-2xl p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-medal text-embed-amber"></i> 제24회 임베디드SW경진대회 심사 항목 & SafeNest 득점 전략
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-embed-border text-slate-400 font-mono text-[9.5px]">
+                                    <th class="py-2 pb-1.5">심사 항목</th>
+                                    <th class="py-2 pb-1.5 text-center">배점</th>
+                                    <th class="py-2 pb-1.5">SafeNest 득점 방안 및 핵심 액션</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-embed-border/30 text-slate-600 leading-relaxed font-sans font-medium text-[11px]">
+                                <tr>
+                                    <td class="py-3 font-bold text-slate-800">독창성 (Originality)</td>
+                                    <td class="py-3 text-center font-mono font-bold text-embed-cyan">30점</td>
+                                    <td class="py-3">카메라 없는 <strong>비영상 프라이버시 보호</strong> + mmWave 호흡 검지 + 다단계 스코어 융합 + 작업자/어린이 이원화 모드. 타 가스감지기·CCTV·스마트워치와의 차별성을 1:1 비교표로 보고서에 전면 부각.</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 font-bold text-slate-800">기술성·완성도 (Technical)</td>
+                                    <td class="py-3 text-center font-mono font-bold text-embed-cyan">30점</td>
+                                    <td class="py-3">FreeRTOS 멀티태스크 분리 설계, 기기간 무선 연동, TinyML 온디바이스 생체 이상 감지, 워치독 예외처리 구현. 3주차 MVP 완성을 DoD 기준으로 잡아 디버깅 및 예외처리에 최다 시간 투입.</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 font-bold text-slate-800">활용성 (Usability)</td>
+                                    <td class="py-3 text-center font-mono font-bold text-embed-cyan">20점</td>
+                                    <td class="py-3">B2B 중대재해처벌법 현장 대응 및 통학차량 어린이 방치 차단이라는 사회적 문제 해결. 안전 통계 수치 및 향후 LTE-M/LoRa 장거리 통신 확장 로드맵을 보고서에 수록.</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 font-bold text-slate-800">정보전달력 (Expression)</td>
+                                    <td class="py-3 text-center font-mono font-bold text-embed-cyan">10점</td>
+                                    <td class="py-3">완성 보고서 20페이지 분량 한계 준수, YouTube 3분 시연 영상의 고화질(720p+) 업로드, GitHub 저장소의 README 구조화 및 수상 시까지 Public 상태 필수 보존.</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 font-bold text-slate-800">팀 역량 (Team Synergy)</td>
+                                    <td class="py-3 text-center font-mono font-bold text-embed-cyan">10점</td>
+                                    <td class="py-3">전자공학 5인 팀원 구성에 맞춘 정교한 R&R 업무 분장. 각 모듈별 주도 개발자를 완료보고서 업무분장표에 실명 기입하여 역할 신뢰성 증빙.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Final Deliverables Checklist (4 cols) -->
+                <div class="lg:col-span-4 glass-card rounded-2xl p-6 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check text-embed-rose"></i> 예선 제출물 규격 & 영상 스토리보드
+                        </h3>
+                        <div class="space-y-3.5 text-xs text-slate-600 pt-2">
+                            <div class="space-y-1 bg-slate-50 border border-embed-border p-3 rounded-lg leading-relaxed">
+                                <span class="font-bold text-slate-800 text-[11px] block"><i class="fa-solid fa-circle-exclamation text-embed-rose mr-1"></i> 제출 양식 및 규격 준수</span>
+                                • 보고서: PPT로 작성 후 PDF로 변환 (표지 제외 20p 한계)<br>
+                                • 파일명: 2026ESWContest_자유공모_팀명_개발완료보고서.pdf<br>
+                                • 리포지토리: 2026ESWContest_free_팀명 (공개 유지)
+                            </div>
+                            <div class="space-y-1 bg-slate-50 border border-embed-border p-3 rounded-lg leading-relaxed">
+                                <span class="font-bold text-slate-800 text-[11px] block"><i class="fa-solid fa-video text-embed-purple mr-1"></i> 시연 영상 3분 스토리보드</span>
+                                1. (0:00~0:20) 밀폐공간 질식 사고 및 정지 인체 미탐 문제 제기<br>
+                                2. (0:20~1:30) 상자 내 정지 호흡 mmWave 감지 및 스코어 연산 시연<br>
+                                3. (1:30~2:20) CO₂ 가스 투입 시 경광등·진동·Telegram 다단 경보<br>
+                                4. (2:20~2:45) 무태그 인체 잔류 시 어린이 보호 모드 경고 시연<br>
+                                5. (2:45~3:00) 기대 효과 및 확장 로드맵 한 컷 요약
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 text-[10px] text-slate-400 font-mono text-center">
+                        * 마감 후 팀원 및 작품주제 절대 변경 불가 (규정)
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: HW WIRING & WBS DEPENDENCY ==================== -->
+        <section id="tab-content-wiring" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- MCU & Sensor Pinout Schematic mapping (7 cols) -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-embed-cyan"></i> 하드웨어 배선 정보 & 핀 매핑 (HW Interconnect Pin Mapping)
+                            </h2>
+                            <p class="text-xs text-slate-500">ESP32-S3 및 STM32H7 MCU의 핀 매핑 인터페이스 사양서</p>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b border-embed-border text-slate-400 font-mono text-[10px]">
+                                        <th class="py-2.5 px-2">대상 장치</th>
+                                        <th class="py-2.5 px-2">프로토콜</th>
+                                        <th class="py-2.5 px-2">센서 핀</th>
+                                        <th class="py-2.5 px-2 text-embed-cyan">ESP32-S3</th>
+                                        <th class="py-2.5 px-2 text-embed-purple">STM32H7</th>
+                                        <th class="py-2.5 px-2 text-right">전원</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-embed-border/30 font-mono text-slate-600" id="wiring-table-body">
+                                    <!-- Injected by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-embed-border text-[10px] text-slate-600 leading-relaxed font-sans space-y-1">
+                            <div class="font-bold text-slate-800"><i class="fa-solid fa-circle-exclamation text-embed-amber mr-1"></i> I2C 버스 공유 및 풀업(Pull-up) 매커니즘 설명</div>
+                            <p class="text-[9.5px]">
+                                열화상(MLX90640), CO₂(SCD40), 온습도(BME680) 센서는 동일한 I2C 버스 라인(SDA: GPIO 11, SCL: GPIO 12)을 공유하여 ESP32-S3의 GPIO 핀 소모를 극적으로 최소화합니다. 슬레이브 주소(MLX90640: 0x33, SCD40: 0x62)의 충돌이 없는 구조로 설계되었으나, 3개의 센서가 1개의 라인에 집중되므로 외장 4.7kΩ 물리 풀업 저항을 회로상에 반드시 병렬 연결하여 전압 레벨 강화 및 신호 품질 왜곡을 차단해야 합니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- SafeNest 핵심 센서 공학 설명서 (Sensor Technology & Spec Sheets) -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-book-open text-embed-cyan"></i> SafeNest 탑재 핵심 센서 공학 설명서
+                            </h3>
+                            <p class="text-xs text-slate-500">각 물리 센서의 동작 원리 및 SafeNest 시스템 내에서의 구체적 역할</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600">
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-1.5">
+                                <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-embed-cyan"></span> mmWave 레이더 센서 (MR60BHA1)
+                                </h4>
+                                <p class="text-[10.5px] leading-relaxed font-medium">
+                                    <strong>원리:</strong> 60GHz 대역의 초고주파 밀리미터파를 송출하고 반사되어 돌아오는 파동의 도플러 효과 및 미세 주파수 변이를 분석합니다.<br>
+                                    <strong>역할:</strong> 호흡이나 맥박 시 일어나는 가슴의 미세 움직임(0.2Hz~0.5Hz 대역)을 감지하여, <strong>정지 상태의 작업자도 카메라 없이(프라이버시 보호) 완벽히 생명을 판별</strong>해 냅니다.
+                                </p>
+                            </div>
+
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-1.5">
+                                <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-embed-purple"></span> 열화상 IR 센서 (MLX90640)
+                                </h4>
+                                <p class="text-[10.5px] leading-relaxed font-medium">
+                                    <strong>원리:</strong> 32x24 픽셀의 원적외선(FIR) 서모파일 어레이 센서로, 대상 물체에서 방출되는 적외선 복사 에너지를 측정해 절대 온도를 스캔합니다.<br>
+                                    <strong>역할:</strong> mmWave 레이더가 정지 사물이나 모터 진동으로 인해 오작동하는 것을 방지하기 위해, 공간 내에 <strong>36.5℃ 내외의 인체 열원(Heat Source) 분포가 실재하는지 이미지 상으로 상호 교차 검증</strong>합니다.
+                                </p>
+                            </div>
+
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-1.5">
+                                <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-embed-amber"></span> CO₂ 가스 센서 (SCD40)
+                                </h4>
+                                <p class="text-[10.5px] leading-relaxed font-medium">
+                                    <strong>원리:</strong> 광음향(Photoacoustic) 분광 기술을 사용합니다. 특정 파장의 적외선 가스 흡수 시 발생하는 미세 음파를 내장 마이크로 측정하여 CO₂ 농도를 정밀 계측합니다.<br>
+                                    <strong>역할:</strong> 밀폐공간 내부의 가스 질식 리스크를 추적합니다. 사람이 체류할 때 발생하는 <strong>CO₂의 점진적 상승 경향(Trend)을 파악</strong>하여 생명 신호를 간접 추적하고 대피 사이렌을 울립니다.
+                                </p>
+                            </div>
+
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-1.5">
+                                <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-embed-blue"></span> 출입 IR/ToF 센서 (VL53L1X)
+                                </h4>
+                                <p class="text-[10.5px] leading-relaxed font-medium">
+                                    <strong>원리:</strong> VCSEL 레이저 광원이 대상에 맞고 돌아오는 비행 시간(Time-of-Flight)을 나노초 단위로 정밀 측정하여 절대적인 거리를 계산합니다.<br>
+                                    <strong>역할:</strong> 입구 통로에 20cm 간격으로 수직 정렬되어 배치되며, <strong>두 빔의 단선 순서(ToF 1 ➔ ToF 2 차단 시 입장, 반대 시 퇴장)를 분석해 잔류 인원 불일치를 연산</strong>해 냅니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: R&R Matrix & Dependency (5 cols) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <!-- 5-Member Team R&R Responsibility table -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-users-gear text-embed-cyan"></i> SafeNest 5인 팀원 역할 분담 (R&R Matrix)
+                        </h3>
+                        <div class="overflow-x-auto text-[11px]">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-embed-border text-slate-400 font-mono text-[9px]">
+                                        <th class="py-2">담당 역할</th>
+                                        <th class="py-2">주요 구현 태스크 및 소유 산출물</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-embed-border/30 text-slate-600 font-sans font-medium">
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">팀장/아키텍트</td>
+                                        <td class="py-2.5">위험도 스코어 산출 융합 로직(Fusion Task), 다중 노드 최종 무선 통합, 마일스톤 및 예선 완료보고서 총괄</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">펌웨어 A (인체)</td>
+                                        <td class="py-2.5">ESP32-S3 + mmWave(UART 파서 및 호흡신호 분석) + 열화상(보간/사람 탐지) + PIR 센서 실장 드라이버 펌웨어</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">펌웨어 B (환경)</td>
+                                        <td class="py-2.5">SCD40/BME680/CO 드라이버, 현장 경보(부저, LED, 12V 릴레이 경광등), 출입구 노드(문 개폐 리드스위치, ToF 2개 방향 판정)</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">통신·서버</td>
+                                        <td class="py-2.5">Wi-Fi + MQTT 브로커 수집 통신, 옵션 LoRa 링크 예비 무선 구성, Pi5 관제 서버(FastAPI) 및 SQLite 위험 데이터베이스, Telegram 경보 봇</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">웨어러블·AI</td>
+                                        <td class="py-2.5">작업자 안전 태그(ESP32-C3, 진동 소자, SOS 긴급 텍트 스위치), TensorFlow Lite Micro 경량 이상 호흡 양자화 추론 이식, 3분 시연 비디오 제작</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- HW Dependency timeline tracker -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-link text-embed-amber"></i> 물리적 HW 의존성 체인 (Supply & Dev Dependency)
+                            </h2>
+                            <span class="text-[9px] text-slate-400 font-mono">CPM Critical Path</span>
+                        </div>
+                        <div class="space-y-3.5" id="wiring-dep-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: RESOURCE PROFILING & HIL TESTING ==================== -->
+        <section id="tab-content-resource" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Resource Profiler Charts (7 cols) -->
+                <div class="lg:col-span-7 glass-card rounded-2xl p-6 space-y-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-wave-square text-embed-cyan"></i> 실시간 MCU 펌웨어 자원 & 전력 모니터링
+                        </h2>
+                        <p class="text-xs text-slate-500">SRAM 용량 적재 현황 및 연속 동작 소모 전류 (mA) 최적화 추이</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-50 border border-embed-border rounded-xl p-4 h-52 flex flex-col justify-between">
+                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                                <span>SRAM 메모리 점유</span>
+                                <span class="text-embed-cyan font-bold" id="mem-percent-tab">48%</span>
+                            </div>
+                            <div class="h-36">
+                                <canvas id="memoryChartTab"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-embed-border rounded-xl p-4 h-52 flex flex-col justify-between">
+                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                                <span>소비 전류 트렌드 (mA)</span>
+                                <span class="text-embed-amber font-bold" id="power-eval-tab">85mA (안정)</span>
+                            </div>
+                            <div class="h-36">
+                                <canvas id="powerChartTab"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation vs HIL Error Analysis Charts (5 cols) -->
+                <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-embed-purple"></i> Sim vs HIL 오차 검증 및 신뢰도 매칭
+                        </h2>
+                        <p class="text-xs text-slate-500">mmWave 주파수 대역별 가상 시뮬레이션 모델과 실제 센싱 오차 비율</p>
+                    </div>
+
+                    <div class="bg-slate-50 border border-embed-border rounded-xl p-4 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="text-[10px] text-slate-400 font-mono">시뮬레이션-물리 일치도 (Matching Rate)</div>
+                                <div class="text-2xl font-extrabold text-slate-800 mt-1" id="matching-rate-display-tab">94.8 %</div>
+                            </div>
+                            <span class="px-2 py-1 bg-embed-green/10 text-embed-green border border-embed-green/20 rounded text-[10px] font-bold">오차범위 합격</span>
+                        </div>
+
+                        <div class="h-28">
+                            <canvas id="errorChartTab"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-500">HIL 가상 오차 측정:</span>
+                        <button onclick="recalculateHILErrorsTab()" class="px-3 py-1.5 bg-white border border-embed-border hover:border-embed-cyan hover:text-embed-cyan rounded text-xs transition duration-150 shadow-sm font-semibold">
+                            <i class="fa-solid fa-arrows-rotate mr-1"></i> 데이터 재프로파일링
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech-Spec & Resource Margins Explanation -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-embed-cyan"></i> SRAM 버젯 분배 및 HIL(Hardware-In-the-Loop) 오차 매칭 방안
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-600">
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-slate-800"><i class="fa-solid fa-memory text-embed-cyan mr-1"></i> 1. SRAM 512KB 메모리 버젯 배분</h4>
+                        <p class="leading-relaxed font-medium">
+                            ESP32-S3의 SRAM은 총 512KB입니다. SafeNest 시스템은 이 중 <strong>TensorFlow Lite Micro용 텐서 아레나 영역에 28KB</strong>를 정적으로 할당하여 기상 상태 판별용 딥러닝 추론을 로컬 단에서 독립 실행합니다. FreeRTOS Heap 공간에 120KB를 할당하여 통신 및 센서 버퍼를 안정적으로 제어하며 Heap Leak 체크 매커니즘을 상시 가동합니다.
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-slate-800"><i class="fa-solid fa-battery-quarter text-embed-amber mr-1"></i> 2. 연속 전력 120mA 버젯 관리</h4>
+                        <p class="leading-relaxed font-medium">
+                            mmWave 레이더의 5V 액티브 구동 시 소모 전류는 평균 80mA입니다. Wi-Fi 송신 활성화(RF Tx peak) 시에는 최대 150mA까지 순간 전류가 상승하므로, 센서 데이터를 1초 단위로 송출하되 통신 비활성 구간에는 Light-Sleep 모드를 점진적으로 호출해 평균 85mA 수준의 전력 소모 안정성을 유지합니다.
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-slate-800"><i class="fa-solid fa-gauge-high text-embed-purple mr-1"></i> 3. HIL 시뮬레이션 매칭율 검증</h4>
+                        <p class="leading-relaxed font-medium">
+                            가상 환경(MATLAB 시뮬레이션 모델)에서 도출한 인간의 분당 호흡수 대역(0.2Hz ~ 0.3Hz)의 흉부 반사 임펄스 파형과, 실제 실물 하드웨어 테스트베드(HIL 챔버) 내 mmWave 레이더 60GHz 반사 대역을 실시간 FFT 처리하여 오차 범위를 8% 이내로 안정 튜닝(시뮬레이션 일치도 94% 이상 달성)하여 정밀 오탐을 격리합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESP32-S3 메모리 초과 리스크 및 라즈베리파이 하이브리드 타당성 분석서 -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-embed-border pb-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-microchip text-embed-purple"></i> ESP32-S3 메모리 초과 검토 및 라즈베리파이 하이브리드 토폴로지 타당성 분석서
+                    </h3>
+                    <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-purple/10 text-embed-purple border border-embed-purple/20 font-bold font-mono">Platform Feasibility Report</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed font-sans font-medium">
+                    본 SafeNest 시스템의 다중 센싱 알고리즘을 <strong>단일 ESP32-S3 MCU</strong> 내에 완전히 밀집시킬 경우 발생할 수 있는 메모리 초과(OOM) 리스크를 검토하고, 대안으로 라즈베리파이(SBC) 단독 아키텍처 및 <strong>하이브리드 분산 아키텍처</strong>의 공학적 타당성을 비교 분석한 결과 보고서입니다.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs pt-2">
+                    <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-1.5 text-embed-rose">
+                            <i class="fa-solid fa-triangle-exclamation"></i> ESP32-S3 단독 구동 시 OOM 위험
+                        </h4>
+                        <p class="leading-relaxed text-[11px] text-slate-500 font-medium">
+                            ESP32-S3의 <strong>내장 SRAM 512KB</strong> 중 RTOS 커널(45KB), Wi-Fi/MQTT 통신 스택(95KB), mmWave FFT 드라이버(40KB), 열화상 실수형 보간 버퍼(30KB)를 구동하면 약 230KB가 이미 소모됩니다. 여기에 TinyML 추론 텐서 아레나(최대 250KB)를 추가로 할당하면 <strong>가용 힙 용량을 초과하여 커널 패닉(OutOfMemory) 리부팅 루프</strong>에 빠질 우려가 매우 큽니다. (외장 8MB PSRAM 보급 보드를 사용하거나 모델 양자화가 필수적입니다.)
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-1.5 text-embed-amber">
+                            <i class="fa-solid fa-server"></i> 라즈베리파이 단독 전환 시의 한계
+                        </h4>
+                        <p class="leading-relaxed text-[11px] text-slate-500 font-medium">
+                            라즈베리파이 4/5로 전면 대체하면 GB급 RAM으로 메모리 부족은 소멸되나, <strong>연속 전력 소모가 3W~5W(최대 1A)</strong>에 육박하여 350mAh 소형 리튬폴리머 배터리로는 웨어러블 및 무선 노드로 구동이 불가능합니다. 또한 리눅스 OS 부팅 지연(Cold boot 20초+)으로 센서 빔 통과 방향 즉시 계측과 같은 실시간 대응이 완전 불능이 되며 전원 차단 시 파일 파손 리스크가 큽니다.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-1.5 text-embed-green">
+                            <i class="fa-solid fa-network-wired"></i> 최종 권장: 하이브리드 분산 토폴로지
+                        </h4>
+                        <p class="leading-relaxed text-[11px] text-slate-500 font-medium">
+                            <strong>역할 분담 아키텍처:</strong> 초저전력 및 1초 이내 즉각 기동이 필요한 현장 센싱/로컬 비상 사이렌 물리 경보부(Fail-Safe)는 <strong>ESP32-S3</strong>가 전담합니다. 대용량 연산이 필요한 32x24 열화상 인체 2D 분석, MQTT 관제 웹 서버 호스팅, SQLite 영구 로그 저장 및 텔레그램 경보 푸시 등은 상시 전원이 인가되는 <strong>라즈베리파이(SBC)</strong>가 비동기로 나누어 처리하는 분산 토폴로지가 대회의 공학적 신뢰성에 가장 부합합니다.
+                        </p>
+                    </div>
+                </div>
+                <div class="pt-2 text-right">
+                    <a href="file:///Users/junwoo/.gemini/antigravity-cli/brain/4b9e24d5-f8d5-4c0f-b55a-793179493df3/esp32_vs_raspberrypi_review.md" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-embed-cyan hover:text-embed-cyan/80 font-bold">
+                        <i class="fa-solid fa-file-pdf"></i> 아키텍처 기술 검토서 정식 문서 (.md) 전문 보기 ➔
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 5: FAIL-SAFE MATRIX & KPT RETROSPECTIVE ==================== -->
+        <section id="tab-content-failsafe" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Fail-Safe & Risk Score Algorithm (6 cols) -->
+                <div class="lg:col-span-6 space-y-6">
+                    <!-- Fail Safe Matrix -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-embed-rose"></i> 기능 안전 Fail-Safe 대응 매트릭스
+                            </h2>
+                            <p class="text-xs text-slate-500">센서 불량, 전압 불안정 등 하드웨어 예외 발생 시 비상 대응책</p>
+                        </div>
+                        <div class="space-y-3 font-mono" id="failsafe-matrix-tab"></div>
+                    </div>
+
+                    <!-- Risk Score Algorithm Spec -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-calculator text-embed-cyan"></i> SafeNest 위험도(Risk Score) 판단 알고리즘 및 점수 공식 명세서
+                        </h3>
+                        <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                            본 시스템은 단순 센서의 임계치 비교를 넘어, 환경 요인과 생명 신호 및 출입 정합성을 종합 결합하여 <strong>0점부터 100점까지의 가중치 기반 위험도 점수(R)</strong>를 계산하고, 이에 따라 차별화된 경보 강도를 출력합니다.
+                        </p>
+                        <div class="space-y-3.5 text-xs text-slate-600">
+                            <!-- Formula details -->
+                            <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2.5">
+                                <h4 class="font-bold text-slate-800 border-b border-slate-200 pb-1.5 flex items-center justify-between">
+                                    <span>수식 및 가중치 분배 (Weight Score Sheet)</span>
+                                    <span class="text-[10px] font-mono text-embed-cyan font-semibold">Total Max: 100</span>
+                                </h4>
+                                <div class="font-mono text-[10px] space-y-1.5 leading-relaxed bg-white p-3 rounded-lg border border-embed-border/50">
+                                    <div>Risk Score R = w1·Presence + w2·Time + w3·Air + w4·Motion + w5·Mismatch</div>
+                                    <div class="text-[9px] text-slate-400 border-t border-slate-100 pt-1.5 mt-1.5 space-y-1">
+                                        <div>• 인체 감지 점수 (Human Presence): <strong>+25점</strong> (mmWave 레이더 or PIR 감지)</div>
+                                        <div>• 문 밀폐 감지 점수 (Door Closed Sw): <strong>+10점</strong></div>
+                                        <div>• 장기 체류 시간 점수 (Stay Time > 180초): <strong>+10점</strong></div>
+                                        <div>• 이산화탄소 주의 수치 초과 (CO₂ > 1500ppm): <strong>+15점</strong></div>
+                                        <div>• 일산화탄소 위험 감지 (CO > Danger Threshold): <strong>+30점</strong></div>
+                                        <div>• 비활동성 감지 (No Motion > 60초 잔류): <strong>+15점</strong></div>
+                                        <div>• 입장/퇴장 인원 불일치 (InOut Mismatch): <strong>+20점</strong></div>
+                                        <div>• 태그 긴급 비상 버튼 (SOS Tact Sw): <strong>즉시 100점 강제 설정</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Score Mapping Status (Updated to 3 stages) -->
+                            <div class="bg-slate-50 border border-embed-border p-4 rounded-xl space-y-2.5">
+                                <h4 class="font-bold text-slate-800 border-b border-slate-200 pb-1.5 flex items-center justify-between">
+                                    <span>3단계 상태 전환 및 디바이스 경보 액션 매핑</span>
+                                    <span class="text-[10px] font-mono text-embed-rose font-semibold">3-Stage Core Thresholds</span>
+                                </h4>
+                                <table class="w-full text-left text-[10.5px]">
+                                    <thead>
+                                        <tr class="text-[9px] text-slate-400 font-mono border-b border-slate-200">
+                                            <th class="pb-1">점수 범위</th>
+                                            <th class="pb-1">상태</th>
+                                            <th class="pb-1">현장 제어 (LED/부저)</th>
+                                            <th class="pb-1">원격 조치 (서버)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 leading-relaxed font-sans text-slate-500 font-medium">
+                                        <tr>
+                                            <td class="py-1.5 font-bold font-mono">R &lt; 40</td>
+                                            <td class="py-1.5 text-embed-green font-bold">NORMAL (정상)</td>
+                                            <td class="py-1.5">녹색 LED 온, 부저/진동 오프</td>
+                                            <td class="py-1.5">센서값 백업 모니터링</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 font-bold font-mono">40 ≤ R &lt; 70</td>
+                                            <td class="py-1.5 text-embed-amber font-bold">CAUTION (주의)</td>
+                                            <td class="py-1.5">황색 LED 온, 진동 태그 미세진동</td>
+                                            <td class="py-1.5">대시보드 경고 표시, 환기 가이드</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 font-bold font-mono">R ≥ 70</td>
+                                            <td class="py-1.5 text-embed-rose font-bold">DANGER (위험)</td>
+                                            <td class="py-1.5">적색 LED 점멸, 비상 사이렌, 강진동</td>
+                                            <td class="py-1.5">구조대 및 텔레그램 SOS 발송</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Project Risk Register & KPT Board (6 cols) -->
+                <div class="lg:col-span-6 space-y-6">
+                    <!-- SafeNest Project Risk Register Table -->
+                    <!-- SafeNest FMEA (Failure Mode and Effects Analysis) RPN Risk Register -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div class="flex justify-between items-center border-b border-embed-border pb-3">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-embed-rose"></i> SafeNest 공학적 위험도 분석 및 FMEA RPN 레지스터
+                            </h3>
+                            <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-rose/10 text-embed-rose border border-embed-rose/20 font-bold font-mono">FMEA RPN Matrix</span>
+                        </div>
+                        <p class="text-[10.5px] text-slate-500 leading-relaxed font-medium">
+                            심사 배점(기술성/완성도) 극대화를 위해 시스템 고장 모드 분석 기법인 **FMEA**를 적용하여 리스크를 정량 평가했습니다. RPN(Severity 심각도 x Occurrence 발생도 x Detection 검출도) 기준으로 선제적 극복 방안을 수립했습니다.
+                        </p>
+                        <div class="overflow-x-auto text-[10px]">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-embed-border text-slate-400 font-mono text-[8.5px]">
+                                        <th class="py-2">고장 모드 및 식별된 리스크</th>
+                                        <th class="py-2 text-center">초기 RPN</th>
+                                        <th class="py-2 text-center">완화 RPN</th>
+                                        <th class="py-2">공학적 선제 완화전략 및 극복 매커니즘</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-embed-border/30 text-slate-600 font-sans font-medium leading-relaxed">
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">해외 배송 지연으로<br>핵심 센서 미확보</td>
+                                        <td class="py-2.5 text-center font-mono text-embed-rose">144<br><span class="text-[8px] text-slate-400">(S9 O4 D4)</span></td>
+                                        <td class="py-2.5 text-center font-mono text-embed-green font-bold">18<br><span class="text-[8px] text-slate-400">(S9 O1 D2)</span></td>
+                                        <td class="py-2.5 text-[9.5px]">7/2 즉시 우선순위 A 해외 발주. 대기 W1~W2 기간 중 C 컴파일러 내에 <strong>UART/I2C 가상 센서 패킷 에뮬레이터 루틴</strong>을 Mock 객체로 사전 개발하여 실제 부품 도착 전 소프트웨어 퓨전 연산 테스트 완료.</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">mmWave 레이더<br>센서 단종 및 품절</td>
+                                        <td class="py-2.5 text-center font-mono text-embed-rose">150<br><span class="text-[8px] text-slate-400">(S10 O5 D3)</span></td>
+                                        <td class="py-2.5 text-center font-mono text-embed-green font-bold">20<br><span class="text-[8px] text-slate-400">(S10 O1 D2)</span></td>
+                                        <td class="py-2.5 text-[9.5px]">MR60BHA1 레지스터 및 UART 통신 프레임 규격이 호환되는 후속 모듈 <strong>MR60BHA2</strong> 및 60GHz 낙상 겸용 <strong>MR60FDA1</strong> 펌웨어 추상화 계층(HAL) 드라이버를 이중 준비하여 부품 교체 시 단 1줄의 컴파일 헤더 변경으로 즉시 동작 확보.</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">기류 급변/팬 진동에<br>의한 센서 오진 오류</td>
+                                        <td class="py-2.5 text-center font-mono text-embed-rose">168<br><span class="text-[8px] text-slate-400">(S7 O6 D4)</span></td>
+                                        <td class="py-2.5 text-center font-mono text-embed-green font-bold">28<br><span class="text-[8px] text-slate-400">(S7 O2 D2)</span></td>
+                                        <td class="py-2.5 text-[9.5px]">단일 센서 맹신을 극복하기 위해 mmWave 호흡 신호(0.2~0.5Hz)가 검출되어도, <strong>MLX90640 인체 온도(35.5~37.5°C) 픽셀 분포 카운트</strong>가 AND 연산으로 정합되지 않으면 이상 판정을 유예하는 하이브리드 필터링 적용.</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">대회장 무선 혼잡에<br>따른 Wi-Fi/MQTT 차단</td>
+                                        <td class="py-2.5 text-center font-mono text-embed-rose">168<br><span class="text-[8px] text-slate-400">(S8 O7 D3)</span></td>
+                                        <td class="py-2.5 text-center font-mono text-embed-green font-bold">16<br><span class="text-[8px] text-slate-400">(S8 O1 D2)</span></td>
+                                        <td class="py-2.5 text-[9.5px]">대회장 내 2.4GHz 무선 포화에 대비해 부스에 <strong>5GHz 전용 사설 로컬 공유기</strong>를 가동해 사설 MQTT망 격리. 백업 물리 링크로 433MHz <strong>LoRa(SX1276) 애드혹 송수신 회로</strong>를 동시 구성하여 주파수 다중화 구현.</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-2.5 font-bold text-slate-800">3주차 MVP 관통<br>완성 지연 및 파산</td>
+                                        <td class="py-2.5 text-center font-mono text-embed-rose">180<br><span class="text-[8px] text-slate-400">(S9 O5 D4)</span></td>
+                                        <td class="py-2.5 text-center font-mono text-embed-green font-bold">18<br><span class="text-[8px] text-slate-400">(S9 O1 D2)</span></td>
+                                        <td class="py-2.5 text-[9.5px]">TinyML 추론 엔진 탑재 및 대시보드 그래픽 가동 등 부가 기능은 전처리 컴파일 지시자(`#define ENABLE_ADVANCED_FEATURES`)로 비활성화 제어. W3 시점까지 단순 ADC/GPIO 폴링 기반 위험 분석 및 사이렌 구동 1회 관통 보증.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- KPT Board -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div class="flex justify-between items-center border-b border-embed-border pb-2">
+                            <div>
+                                <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-comments text-embed-cyan"></i> 프로젝트 지속적 회고 보드 (KPT Retrospective Board)
+                                </h2>
+                                <p class="text-xs text-slate-500">개발 중 성과(Keep), 병목(Problem), 개선점(Try) 기록 및 공유</p>
+                            </div>
+                            <button onclick="addNewKPTCard()" class="px-3 py-1.5 bg-white border border-embed-border hover:border-embed-cyan hover:text-embed-cyan text-xs text-slate-700 font-semibold rounded-lg transition shadow-sm flex items-center gap-1">
+                                <i class="fa-solid fa-plus text-xs"></i> 회고 카드 추가
+                            </button>
+                        </div>
+
+                        <!-- Columns -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2.5">
+                                <h4 class="text-xs font-bold text-embed-green border-b border-embed-green/10 pb-1.5 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-embed-green"></span> Keep (성과)
+                                </h4>
+                                <div class="space-y-2" id="kpt-col-keep-tab"></div>
+                            </div>
+
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2.5">
+                                <h4 class="text-xs font-bold text-embed-rose border-b border-embed-rose/10 pb-1.5 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-embed-rose"></span> Problem (병목)
+                                </h4>
+                                <div class="space-y-2" id="kpt-col-problem-tab"></div>
+                            </div>
+
+                            <div class="bg-slate-50 border border-embed-border p-3.5 rounded-xl space-y-2.5">
+                                <h4 class="text-xs font-bold text-embed-blue border-b border-embed-blue/10 pb-1.5 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-embed-blue"></span> Try (시도)
+                                </h4>
+                                <div class="space-y-2" id="kpt-col-try-tab"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for WBS Weekly Details & To-Do List Checkboard -->
+    <div id="wbs-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white border border-embed-border rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                    <span class="text-[9px] font-mono font-bold text-embed-cyan bg-embed-cyan/10 border border-embed-cyan/20 px-2 py-0.5 rounded uppercase" id="wbs-modal-week-label">Week 0</span>
+                    <h3 class="text-sm font-bold text-slate-800 mt-1" id="wbs-modal-title">주차 타이틀</h3>
+                </div>
+                <button onclick="closeWbsModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="space-y-4 text-xs">
+                <div>
+                    <span class="text-slate-400 block font-semibold text-[9.5px] uppercase">상세 주간 목표</span>
+                    <p class="text-slate-600 mt-1 leading-relaxed font-medium" id="wbs-modal-desc"></p>
+                </div>
+                
+                <div class="bg-slate-50 border border-embed-border rounded-xl p-3.5 space-y-2.5">
+                    <span class="text-slate-700 block font-bold text-[10.5px]"><i class="fa-solid fa-check-double text-embed-green mr-1"></i> 주차별 상세 To-Do List</span>
+                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1" id="wbs-modal-todo-list">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <div class="bg-embed-cyan/5 border border-embed-cyan/25 rounded-xl p-3 text-slate-600">
+                    <strong class="text-embed-cyan block font-bold"><i class="fa-solid fa-bullseye mr-1"></i> 완료 기준 (Definition of Done)</strong>
+                    <p class="text-[11px] mt-1 leading-normal font-medium" id="wbs-modal-dod"></p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center text-xs border-t border-slate-100 pt-3">
+                <span class="text-slate-500 font-bold" id="wbs-modal-progress-label">진척도: 0%</span>
+                <button onclick="closeWbsModal()" class="px-4 py-1.5 bg-embed-cyan hover:bg-embed-cyan/90 text-white font-bold rounded shadow-sm transition">저장 및 닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding KPT Card -->
+    <div id="kpt-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white border border-embed-border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-xl">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square text-embed-cyan"></i> 새로운 회고 카드 등록
+            </h3>
+            
+            <div class="space-y-3 text-xs">
+                <div class="space-y-1">
+                    <label class="text-slate-500 block font-semibold">회고 카테고리</label>
+                    <select id="kpt-select-type" class="w-full bg-slate-50 border border-embed-border rounded p-2 text-slate-800 outline-none focus:border-embed-cyan">
+                        <option value="keep">Keep (지속 유지)</option>
+                        <option value="problem">Problem (문제 발견)</option>
+                        <option value="try">Try (해결책/시도)</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-slate-500 block font-semibold">내용 기록</label>
+                    <textarea id="kpt-input-content" rows="3" class="w-full bg-slate-50 border border-embed-border rounded p-2 text-slate-800 outline-none focus:border-embed-cyan placeholder:text-slate-400" placeholder="상세 피드백 기록..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 text-xs">
+                <button onclick="closeKPTModal()" class="px-3 py-1.5 border border-embed-border text-slate-500 hover:text-slate-800 rounded">취소</button>
+                <button onclick="submitKPTCard()" class="px-3 py-1.5 bg-embed-cyan text-white font-bold rounded shadow-sm">추가하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Summary -->
+    <footer class="border-t border-embed-border bg-white py-8 mt-12 text-center text-xs text-slate-400 font-mono">
+        <div class="max-w-7xl mx-auto px-4 space-y-2">
+            <p>SafeNest System Architecture & Engineering Platform for the 24th Embedded Software Competition</p>
+            <p class="text-[10px]">Designed by Antigravity | Local Storage Based Data Automation System</p>
+        </div>
+    </footer>
+
+    <!-- APP SCRIPT CONTROLLER -->
+    <script>
+        // --- TIMELINE CONSTANTS ---
+        const CONTEST_DEADLINE = new Date("2026-09-03T23:59:59").getTime();
+
+        // --- PLATFORM CONSTANTS ---
+        const VMODEL_GATES = [
+            {
+                gate: 1,
+                title: "Gate 1. 요구사항 및 물리 제약 정의",
+                desc: "기초 설계 단계에서 하드웨어 전력 범위, 외관 기구 치수, 무선 전송 한계 등의 제약 사항을 정의하고 고정합니다. 이 기초 게이트가 확립되어야 다음 핀 배선 단계로 갈 수 있습니다.",
+                entry: [
+                    "대회 규정 및 자유공모 부문 하드웨어 한계 검토 완료",
+                    "배터리 구동 안전 요건 확인 (폭발 방지 인증 배터리 기준)"
+                ],
+                steps: [
+                    "연속 동작 전류 120mA 이하, 대기 모드 5mA 이하를 위한 저전력 시뮬레이션 수립",
+                    "밀폐 공간 설치를 위한 하우징 크기 제약 수립 (최대 150mm x 150mm)",
+                    "mmWave 레이더의 60GHz 주파수 감쇠 파동 억제 요건 수립"
+                ],
+                exit: [
+                    "시스템 설계 요건 명세서 (.pdf) 아카이브에 영구 저장",
+                    "ESP32-S3 및 STM32H7의 타겟 기기 전력 소모 가이드라인 고정"
+                ],
+                hw: [
+                    "배터리 구동 사양: 3.7V Li-Po 기준 연속 소모 120mA 이하 보증",
+                    "센서 통신 프로토콜: I2C 버스 1채널 공유 (SCD40, MLX90640)",
+                    "RF 간섭: 외관 아크릴 투과 시 60GHz 밀리미터파 주파수 감쇠 특성 확인"
+                ],
+                outputs: [
+                    "시스템 하드웨어 스펙 한계 기술서 (.pdf)",
+                    "가상 전력 시뮬레이션 프로파일 결과 로그"
+                ]
+            },
+            {
+                gate: 2,
+                title: "Gate 2. HW-SW 공동 설계 및 인터페이스 정의",
+                desc: "하드웨어 회로도 작성과 소프트웨어 펌웨어의 핀 매핑 정보를 교차 설계합니다. 핀이 잘못 연결되어 생기는 물리 보드 연소 및 오작동 사고를 예방합니다.",
+                entry: [
+                    "Gate 1 명세서 검토 완료 및 서명 날인",
+                    "사용 센서 데이터시트(SCD40, MLX90640, MR60BHA1) 전수 확보"
+                ],
+                steps: [
+                    "ESP32-S3 UART2 TXD2(GPIO17) 및 RXD2(GPIO18) 매핑 회로 작성",
+                    "I2C 슬레이브 주소 배정 검증 및 풀업 저항값(4.7kΩ) 계산",
+                    "전원 라인 디커플링 콘덴서 및 리셋 회로 구성 설계"
+                ],
+                exit: [
+                    "회로 회로도 도면(KiCAD 거버 파일) 승인",
+                    "SW 핀 맵 헤더 파일(pin_define.h) 확정 선언"
+                ],
+                hw: [
+                    "GPIO 매핑: ESP32-S3 UART2(TX/RX) 핀 충돌 예방 확인",
+                    "I2C 슬레이브 주소 배정: MLX90640(0x33) & SCD40(0x62) 주소 중복 배제",
+                    "전원 라인 노이즈 방지용 디커플링 콘덴서(10uF) 설계 반영"
+                ],
+                outputs: [
+                    "SafeNest MCU 핀 맵 매핑 설계 가이드 (.xls)",
+                    "KiCAD 기반 회로도 및 PCB 아트워크 거버 데이터"
+                ]
+            },
+            {
+                gate: 3,
+                title: "Gate 3. 단위 구현 & 드라이버 튜닝",
+                desc: "각 센서 드라이버가 개별 작동하는지 확인하고, MCU 내에서 TinyML 사람/사물 판별 추론 가중치가 메모리 한계 내에 적재되는지 검증합니다.",
+                entry: [
+                    "Gate 2 회로도 및 기판 납땜 완료",
+                    "ESP-IDF/STM32CubeIDE 기본 컴파일러 셋업 완료"
+                ],
+                steps: [
+                    "mmWave 레이더 파동 시리얼 파서 및 체크섬 연산 코드 개발",
+                    "MLX90640 I2C 고속(400kHz) DMA 수집 루틴 작성",
+                    "TensorFlow Lite Micro 컴파일 및 추론 텐서 아레나(28KB) 할당"
+                ],
+                exit: [
+                    "각 센서별 개별 드라이버 동작성 보고서 제출",
+                    "SRAM 메모리 누수 검증 패스 (ESP Heap Integrity)"
+                ],
+                hw: [
+                    "SRAM 가용 용량: TF Lite Micro 텐서 아레나 할당 28KB 이내 보증",
+                    "mmWave 레이더 파동 신호: FFT 주파수 대역 분석 연동 확인",
+                    "ToF 출입 판별용 이중 빔 진입 방향 추정 코드 디바운싱 작동"
+                ],
+                outputs: [
+                    "ESP32-S3 센서 통합 드라이버 소스 코드 (.c / .h)",
+                    "TensorFlow Lite Micro 경량 추론 이식 테스트 보고서"
+                ]
+            },
+            {
+                gate: 4,
+                title: "Gate 4. 단위 검증 & HIL 테스트",
+                desc: "실제 환경과 유사하게 구성한 벤치 환경에서 시뮬레이션 오차율을 평가하고 정교한 드라이버 튜닝을 통해 오경보 상황을 격리합니다.",
+                entry: [
+                    "Gate 3 소스코드 통합 및 빌드 통과",
+                    "물리 테스트 베드 챔버 구축 및 오실로스코프 준비"
+                ],
+                steps: [
+                    "HIL 벤치 환경에서 0.2Hz~0.5Hz 주파수의 미세 호흡 파동 인가 검증",
+                    "LPF 필터링 감쇠 속도 최적화 및 FFT 피크 오차율 계산",
+                    "이중 ToF 빔 차단 시간차 100ms 이내 통과 상황 방향 매칭 검증"
+                ],
+                exit: [
+                    "주파수 오차율 8% 미만 성적표 확보",
+                    "가사상태(무호흡) 감지 복구 시간 5초 이내 검증 통과"
+                ],
+                hw: [
+                    "호흡 피크 검출 감도: 가사상태(무호흡) 시 0.2Hz 대역 오차 범위 측정",
+                    "진동 노이즈 상쇄율: 로봇/모션 진동 인가 시 LPF 차단 주파수 계량 테스트",
+                    "이중 ToF 방향 구분 신뢰도: 통과 속도별 오류 발생 빈도 계측"
+                ],
+                outputs: [
+                    "HIL 벤치 검증 오차율 분석 시트",
+                    "DSP 필터링 최적화 튜닝 매개변수 문서"
+                ]
+            },
+            {
+                gate: 5,
+                title: "Gate 5. 통합 시스템 신뢰성 검증",
+                desc: "전체 하드웨어와 케이싱을 결합하여 밀폐 가상 탱크 모형에 설치하고, 4가지 시연 시나리오 환경에서 오작동율 10% 이하를 유지하는지 최종 검증합니다.",
+                entry: [
+                    "Gate 4 단위 보정 완료 및 기구 하우징 고정 조립 완료",
+                    "MQTT Broker 및 Telegram 알림 텔레메트리 서버 구성 완료"
+                ],
+                steps: [
+                    "비상 SOS 호출 버튼 기동 시 RF 패킷 송출 및 알림 도달 지연 계측",
+                    "정지 인체 비활동 상태 30분 초과 유지 탐지 신뢰성 확인",
+                    "Wi-Fi 오프라인 상황 인가 및 로컬 백업 Fail-Safe 로직 활성화 점검"
+                ],
+                exit: [
+                    "종합 시스템 신뢰성 최종 평가 시트 및 비상 리커버리 성적 통과",
+                    "대회 본선 프리젠테이션용 최종 산출물 비디오 제작"
+                ],
+                hw: [
+                    "종합 위험 알림 전송 지연 시간: 비상상태 감지 후 원격 전송 3초 이내 도달",
+                    "정지 생명체 감지 유지시간: 무움직임 30분 이상 상태에서의 지속 신호 확인",
+                    "Fail-Safe 로직: 전원 단절 및 통신 장애 시 독립 경보부 및 웨어러블 강제 구동"
+                ],
+                outputs: [
+                    "제출용 시연 영상 및 시스템 통합 신뢰성 성적서 (.pdf)",
+                    "본선 발표용 프레젠테이션 스토리보드"
+                ]
+            }
+        ];
+
+        const WEEKLY_ROADMAP_DATA = [
+            {
+                week: 0,
+                title: "W0. 킥오프 & 부품 발주",
+                duration: "7/2 ~ 7/8",
+                desc: "팀 구성, 역할 분담, 우선순위 A/B 부품 전수 발주 및 GitHub Org 리포 개설 완료",
+                dod: "5명 팀원 각자 센서 1개에서 정상 원시 측정값 출력을 성공한다."
+            },
+            {
+                week: 1,
+                title: "W1. 센서 드라이버 완료",
+                duration: "7/9 ~ 7/15",
+                desc: "mmWave 레이더 UART 패킷 파싱, SCD40/BME680 I2C 드라이버 완성, ToF 방향 구분 로직 구현",
+                dod: "각 센서 단독 구동 데이터가 Pi5 MQTT 대시보드에 에러 없이 표기된다."
+            },
+            {
+                week: 2,
+                title: "W2. 노드 통합 & 통신 골격",
+                duration: "7/16 ~ 7/22",
+                desc: "내부/출입구/웨어러블 3개 분산 노드의 ESP32 펌웨어 통합 및 Pi5 게이트웨이 무선 전송 구축",
+                dod: "3개 물리 노드가 동시 가동되며 대시보드로 실시간 다중 전송을 완수한다."
+            },
+            {
+                week: 3,
+                title: "W3. MVP 관통 (사수)",
+                duration: "7/23 ~ 7/29",
+                desc: "센서퓨전 위험도 점수 계산 태스크 완성 ➔ 위험 초과 시 현장 릴레이 및 텔레그램 연동 완성",
+                dod: "상자에 정지 인체 투입 시 mmWave 재실 감지 ➔ 경보 사이렌 울림까지 1회 완주한다."
+            },
+            {
+                week: 4,
+                title: "W4. 알고리즘 정교화",
+                duration: "7/30 ~ 8/5",
+                desc: "위험도 점수 가중치 튜닝, 문 개폐 연동 예외처리 디바운싱 조율, 전 이벤트 타임스탬프 로깅 구현",
+                dod: "모의 시연 20회 반복 시 오작동율이 15% 이하를 유지한다."
+            },
+            {
+                week: 5,
+                title: "W5. TinyML & 모드 이원화",
+                duration: "8/6 ~ 8/12",
+                desc: "이상 호흡 패턴 수집 학습 및 TFLite Micro 온디바이스 탑재, 작업자/어린이 보호 모드 UI 통합",
+                dod: "숨참기(무호흡) 발생 시 엣지 신경망 추론 결과가 위험 점수에 자동 가산된다."
+            },
+            {
+                week: 6,
+                title: "W6. 실물 모형 & 오탐 튜닝",
+                duration: "8/13 ~ 8/19",
+                desc: "결선 운반을 고려한 아크릴 모형 탱크 실장, 하드웨어 보드 고정, 기류/동적 오경보 상쇄 필터 최적화",
+                dod: "정식 4종 시연 시나리오를 연속 3회 에러 없이 무결점으로 재현 완료한다."
+            },
+            {
+                week: 7,
+                title: "W7. 제출물 제작",
+                duration: "8/20 ~ 8/28",
+                desc: "YouTube 3분 고화질 시연 동영상 촬영 및 자막 편집, 표지 제외 20p 개발완료보고서 취합 완성",
+                dod: "구글폼 접수 양식 및 파일명 규칙을 완벽 준수한 최종 아카이브를 빌드한다."
+            }
+        ];
+
+        // ADDED: Detailed WBS Weekly To-Do items
+        const WBS_WEEKLY_TODOS = {
+            0: [
+                "팀명 SAFENEST 확정 및 팀장 선임 완료",
+                "부품 우선순위 A(mmWave, 열화상, SCD40, BME680, Pi5) 장납기 즉시 발주",
+                "대회 공식 홈페이지 참가 등록 및 구글폼 위치 확정",
+                "공용 GitHub Org 및 리포지토리(Public) 생성 및 Projects 이슈보드 개설",
+                "개발환경 통일 및 공용 코드 컨벤션, Git 브랜치 전략(main/dev/feature) 합의",
+                "요구사항 정의서 초안 및 위험도 임계값 기준표 작성",
+                "mmWave UART 원시 프로토콜 기술서 검토 및 예제 코드 수집"
+            ],
+            1: [
+                "mmWave 레이더 MR60BHA1 UART 파싱 코드 개발 (호흡수, 심박수, 재실 플래그)",
+                "MLX90640 열화상 센서 I2C 드라이버 포팅 및 온도 맵 출력 검증",
+                "SCD40 NDIR 가스 센서 I2C 코드 작성 및 BME680 온습도 드라이버 완성",
+                "VL53L1X ToF 센서 2개의 순차 통과 이벤트를 통한 입장/퇴장 구분 모듈 작성",
+                "웨어러블 태그 BLE(ESP32-C3) 비콘 신호 발송 코드 작성",
+                "라즈베리파이 MQTT 브로커(mosquitto) 가동 및 FastAPI 기본 서버 개설"
+            ],
+            2: [
+                "ESP32-S3 메인 보드에 mmWave + 열화상 + CO₂ 센서 통합 배선 및 구동",
+                "MCU 펌웨어 내부 FreeRTOS 태스크 분리(Sensor Task, Comm Task) 적용",
+                "출입구 노드 문 자석 센서 및 ToF 방향 판정 코드 결합",
+                "웨어러블 태그 SOS 버튼 인터럽트 및 진동 모터 비상 작동 로직 구현",
+                "3개 노드(내부, 출입, 웨어러블) 수집 데이터를 JSON 포맷으로 MQTT 송신 검증"
+            ],
+            3: [
+                "센서 데이터(재실 여부, 가스 수치, 시간, ToF 인원)를 결합한 위험도 R 융합 로직 구현",
+                "위험도 70점 이상 시 ESP32-S3 물리 릴레이를 통한 경광등/부저 즉각 가동 설계",
+                "웨어러블 태그 BLE 신호 끊김 시 경고 진동 트리거 동작 연동",
+                "라즈베리파이 게이트웨이 내 Telegram 봇 비상 송출 API 기동 테스트",
+                "통합 시범 데모(인체 진입 ➔ R 상승 ➔ 로컬 사이렌+Telegram 경보+DB 로깅) 1회 완주"
+            ],
+            4: [
+                "위험도 가중치 변수(w1~w5) 파일 분리화 및 기류/현장별 변수 튜닝",
+                "입출 카운터 ToF 센서 오실로스코프 기반 디바운스 필터 계수 조율",
+                "문 개폐 상태에 따른 대시보드 경보 및 지연 시간 타이머 조율",
+                "Wi-Fi 오프라인/단절 상황 시 BLE 다이렉트 통신을 통한 엣지 독립 구동 복구 검증",
+                "전체 시스템 이벤트 발생 시 정밀 타임스탬프 로그 데이터 구조 보강 및 DB 저장 튜닝"
+            ],
+            5: [
+                "팀원들의 정상 호흡, 과호흡, 숨참기 시나리오 시계열 ADC/UART 데이터 추출 및 정제",
+                "TensorFlow 딥러닝 모델 학습 및 Keras 가중치 추출",
+                "TensorFlow Lite Micro 변환기(INT8 양자화)로 변환해 ESP32-S3 적재",
+                "추론 결과(생체 무호흡 상태 판별 스코어)를 실시간 위험도 공식에 연동하여 주의/위험 유도",
+                "작업자 안전 모드 및 무태그 어린이 보호 모드 소프트웨어 분리 및 화면 대응"
+            ],
+            6: [
+                "전시 부스 규격(2m x 2m)에 맞춘 운반형 아크릴 모형 가스 탱크 및 차량 목업 제작",
+                "하드웨어 보드 브레드보드 ➔ 만능기판/PCB 실장 고정 배선 및 하우징 수납",
+                "기압/진동으로 인한 센서 노이즈 상쇄 LPF 차단 대역 튜닝",
+                "FreeRTOS 가용 힙 메모리 모니터링 태스크 탑재를 통한 Heap Leak 차단 검증",
+                "하드웨어 워치독 타이머(WDT) 활성화로 무한 프리징 현상 방어 리허설"
+            ],
+            7: [
+                "YouTube 업로드용 3분 시연 동영상 촬영 (정지 인체 mmWave 감지 장면 강조)",
+                "동영상 자막, 그래픽 효과 및 나레이션 더빙 편집 완료",
+                "개발완료보고서 PPT 20페이지 작성 및 PDF 최종 아카이브 빌드",
+                "파일명 규칙(2026ESWContest_자유공모_SAFENEST_개발완료보고서) 재검수",
+                "GitHub 리포지토리 최종 Push 및 README.md 도식화 시각 자료 실장",
+                "예선 공식 홈페이지 구글 접수 폼 최종 작성 및 제출 완료"
+            ]
+        };
+
+        const PIN_MAPPING_DATA = [
+            { id: 1, device: "mmWave 레이더 (MR60BHA1)", interface: "UART", pinName: "TXD / RXD", espPin: "GPIO 17 / GPIO 18", stmPin: "USART2_TX(PD5) / USART2_RX(PD6)", voltage: "5V" },
+            { id: 2, device: "열화상 센서 (MLX90640)", interface: "I2C", pinName: "SDA / SCL", espPin: "GPIO 11 / GPIO 12", stmPin: "I2C1_SDA(PB9) / I2C1_SCL(PB8)", voltage: "3.3V" },
+            { id: 3, device: "CO₂ 가스 센서 (SCD40)", interface: "I2C", pinName: "SDA / SCL", espPin: "GPIO 11 / GPIO 12 (Bus Share)", stmPin: "I2C1_SDA(PB9) / I2C1_SCL(PB8)", voltage: "3.3V" },
+            { id: 4, device: "온습도 센서 (BME680)", interface: "I2C", pinName: "SDA / SCL", espPin: "GPIO 11 / GPIO 12 (Bus Share)", stmPin: "I2C1_SDA(PB9) / I2C1_SCL(PB8)", voltage: "3.3V" },
+            { id: 5, device: "출입 IR/ToF 센서 A", interface: "GPIO", pinName: "INT / GPIO", espPin: "GPIO 4", stmPin: "GPIO_PIN_4(PA4)", voltage: "3.3V" },
+            { id: 6, device: "출입 IR/ToF 센서 B", interface: "GPIO", pinName: "INT / GPIO", espPin: "GPIO 5", stmPin: "GPIO_PIN_5(PA5)", voltage: "3.3V" },
+            { id: 7, device: "문 자석 센서 (Reed Sw)", interface: "GPIO", pinName: "GPIO (Pull-up)", espPin: "GPIO 6", stmPin: "GPIO_PIN_6(PA6)", voltage: "3.3V" },
+            { id: 8, device: "경고 부저 (Active Buzzer)", interface: "PWM", pinName: "PWM Control", espPin: "GPIO 42 (LEDC)", stmPin: "TIM2_CH1(PA15)", voltage: "5V" },
+            { id: 9, device: "현장 비상 경광등", interface: "Relay/GPIO", pinName: "GPIO Out", espPin: "GPIO 10", stmPin: "GPIO_PIN_10(PB10)", voltage: "5V/12V" }
+        ];
+
+        const INITIAL_DEPENDENCIES = [
+            { id: 1, name: "60GHz mmWave 모듈 배송 완료", dur: "7일 소요", target: "mmWave 드라이버 펌웨어 파싱 코드 설계", status: "진행중", barColor: "bg-embed-amber", progress: 60 },
+            { id: 2, name: "MLX90640 열화상 I2C 공유 회로 PCB 발주", dur: "10일 소요", target: "열화상 보드 조립 및 I2C 충돌 분석 테스트", status: "대기", barColor: "bg-embed-purple", progress: 0 },
+            { id: 3, name: "ESP32-S3 FreeRTOS 프레임워크 셋업", dur: "5일 소요", target: "하드웨어 드라이버 통합 및 다단계 경보 태스크 연동", status: "완료", barColor: "bg-embed-green", progress: 100 }
+        ];
+
+        const INITIAL_FAILSAFES = [
+            { condition: "mmWave 레이더 RX 타임아웃 3초 초과 (UART 수신 두절)", action: "열화상 센서(MLX90640)의 absolute 온도 점프 검출 알고리즘을 위험도 공식 R 산출의 최대 인자(+45점)로 승격하여 엣지 백업 생명 추적 기동" },
+            { condition: "NDIR CO₂ 가스 수치 비정상 초과 (2,500ppm+ 10초 유지)", action: "내부 작업자 재실 판정 여부와 강제 무관하게 ESP32-S3 GPIO 10을 HIGH로 토글하여 12V 외부 강력 환기 팬 릴레이를 로컬에서 자동 기동하고, 대시보드 경보 기입" },
+            { condition: "관제 게이트웨이 Wi-Fi 무선 신호 차단 (MQTT Keep-Alive 단절)", action: "내부 메인 노드가 로컬 BLE 안테나를 즉시 송출 상태로 튜닝하여, 현장 작업자의 BLE 웨어러블 태그와 1:1 다이렉트 긴급 비상 촉각 진동 및 비상 알람 루틴 독립 가동" }
+        ];
+
+        const INITIAL_KPTS = [
+            { id: 1, type: "keep", content: "비영상 기반 mmWave 레이더와 MLX90640 센서퓨전을 메인 테마로 잡아, 카메라 없는 프라이버시 보호 장점을 심사위원들에게 강하게 부각시킴." },
+            { id: 2, type: "problem", content: "mmWave 레이더의 UART 대기열이 가끔씩 블로킹되어 FreeRTOS 전체 태스크가 지연되는 병목 현상 발견." },
+            { id: 3, type: "try", content: "UART 수집 루틴을 하드웨어 인터럽트 및 DMA 방식으로 변경하여 CPU 자원 점유율을 15% 이하로 낮출 것." }
+        ];
+
+        const DEVICE_BLUEPRINTS = {
+            internal: {
+                title: "내부 인체 감지 노드 (Internal Node)",
+                class: "MAIN ACCURACY SENSOR BOARD",
+                descHtml: `
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">1. 주요 실장 레이아웃:</div>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            밀폐 가구 천장에 브래킷으로 고정되는 120mm x 120mm ABS 방수 하우징입니다. mmWave 레이더의 지향각(FoV 120도)을 아래쪽으로 수직 유지되도록 설계하고, SCD40의 가스 통풍 공기구(Venting Grid)를 하부에 뚫어 자연 대류를 유도합니다.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">2. 부착 센서 장착 물리 위치:</div>
+                        <ul class="text-[11px] text-slate-500 mt-1 space-y-1 font-mono">
+                            <li>- 센터: mmWave 레이더 모듈 수직 배향</li>
+                            <li>- 전방 15도: MLX90640 광학 실리콘 렌즈 배치</li>
+                            <li>- 좌측 그리드: SCD40 가스 대류식 유입구</li>
+                            <li>- 우측 단자: 부저 및 외장 12V 릴레이 단자대</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">3. 하우징 보호 & 격리:</div>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            실제 탱크나 맨홀 내부의 초고습 환경(95% RH+)에서 결로로 인해 MCU가 쇼트되지 않도록 실리콘 패킹 방수 몰딩을 처리하여 IP54 등급 규격을 획득하였습니다.
+                        </p>
+                    </div>
+                `,
+                drawingHtml: `
+                    <div class="relative w-80 h-80 border-2 border-dashed border-embed-cyan/30 rounded-full flex items-center justify-center bg-white shadow-inner font-mono text-[10px]">
+                        <!-- Ring grid -->
+                        <div class="absolute w-64 h-64 border border-embed-cyan/20 rounded-full"></div>
+                        <div class="absolute w-44 h-44 border border-embed-cyan/15 rounded-full"></div>
+                        
+                        <!-- Axis crosslines -->
+                        <div class="absolute w-full h-[1px] bg-embed-cyan/10"></div>
+                        <div class="absolute h-full w-[1px] bg-embed-cyan/10"></div>
+
+                        <!-- Components -->
+                        <div class="absolute w-20 h-20 bg-slate-100 border-2 border-embed-cyan rounded shadow-md flex flex-col items-center justify-center">
+                            <span class="font-bold text-slate-800">MR60BHA1</span>
+                            <span class="text-[8px] text-slate-400">mmWave (60GHz)</span>
+                        </div>
+
+                        <div class="absolute top-12 left-12 w-14 h-10 bg-slate-50 border border-embed-purple rounded flex flex-col items-center justify-center">
+                            <span class="text-[8px] text-embed-purple font-bold">MLX90640</span>
+                            <span class="text-[6px] text-slate-400">IR THERM</span>
+                        </div>
+
+                        <div class="absolute bottom-12 right-12 w-14 h-12 bg-slate-50 border border-embed-amber rounded flex flex-col items-center justify-center">
+                            <span class="text-[8px] text-embed-amber font-bold">SCD40</span>
+                            <span class="text-[6px] text-slate-400">NDIR CO2</span>
+                        </div>
+
+                        <div class="absolute right-10 top-16 w-10 h-10 rounded-full bg-slate-200 border border-embed-rose flex items-center justify-center">
+                            <span class="text-[8px] text-embed-rose font-bold">BUZZER</span>
+                        </div>
+
+                        <span class="absolute top-2 left-1/2 -translate-x-1/2 text-slate-400 text-[8px]">FoV: 120° 지향배열 단면도</span>
+                    </div>
+                `
+            },
+            entrance: {
+                title: "출입구 판별 노드 (Entrance Node)",
+                class: "TRANSIT CONTROL MODULE",
+                descHtml: `
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">1. 진입 매핑 구조:</div>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            맨홀 사다리 입구 또는 챔버 문 프레임 상부에 설치하는 슬림형 바(Bar) 모양 기기입니다. 2개의 VL53L1X ToF 거리 센서가 통로 상에 20cm 간격으로 수직 정렬되어 사람의 통과 순서를 분석합니다.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">2. 인터페이스 및 하드웨어 구성:</div>
+                        <ul class="text-[11px] text-slate-500 mt-1 space-y-1 font-mono">
+                            <li>- ToF 센서 1: 통로 내부측 빔 위치 (GPIO 4)</li>
+                            <li>- ToF 센서 2: 통로 외부측 빔 위치 (GPIO 5)</li>
+                            <li>- 리드 스위치: 도어 프레임 자석 센서 (GPIO 6)</li>
+                            <li>- BLE 안테나: 입장한 작업자 태그 수집기</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">3. 출입 알고리즘 흐름:</div>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            도어 스위치가 ON이 되고, ToF 1이 먼저 끊긴 후 ToF 2가 차단되면 퇴장으로 판별, 반대 순서이면 입장으로 판별하여, 수집된 데이터를 내부 메인 센서 노드로 중계합니다.
+                        </p>
+                    </div>
+                `,
+                drawingHtml: `
+                    <div class="w-80 h-32 bg-white border-2 border-embed-purple/30 rounded-xl relative shadow-md p-4 flex justify-between items-center font-mono text-[9px]">
+                        <!-- Center guideline -->
+                        <div class="absolute w-[90%] left-[5%] top-1/2 -translate-y-1/2 h-[1px] bg-dashed bg-slate-200"></div>
+
+                        <div class="w-16 h-12 bg-slate-50 border border-embed-purple rounded flex flex-col items-center justify-center">
+                            <span class="font-bold text-embed-purple">ToF 1 (내부)</span>
+                            <span class="text-[7px] text-slate-400">GPIO 4</span>
+                        </div>
+
+                        <div class="w-20 h-16 bg-slate-100 border border-slate-300 rounded flex flex-col items-center justify-center text-center">
+                            <span class="font-bold text-slate-800">BLE Scanner</span>
+                            <span class="text-[7px] text-slate-400">Tag tracking</span>
+                        </div>
+
+                        <div class="w-16 h-12 bg-slate-50 border border-embed-purple rounded flex flex-col items-center justify-center">
+                            <span class="font-bold text-embed-purple">ToF 2 (외부)</span>
+                            <span class="text-[7px] text-slate-400">GPIO 5</span>
+                        </div>
+                        
+                        <div class="absolute bottom-2 left-4 text-slate-400 text-[8px] font-sans">※ 200mm 등간격 수직 정렬 배치 구조</div>
+                    </div>
+                `
+            },
+            wearable: {
+                title: "웨어러블 안전 태그 (Wearable Tag)",
+                class: "WORKER PROTECT DEVICE",
+                descHtml: `
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">1. 작업자 휴대 레이아웃:</div>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            작업 조끼 또는 헬멧 후면에 부착할 수 있는 40mm x 40mm 크기의 초소형 안전 태그 기기입니다. Li-Po 3.7V 350mAh 배터리와 안테나를 탑재하여 연속 12시간 통신 광고(Advertising)가 가능합니다.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">2. 핵심 버튼 및 구조:</div>
+                        <ul class="text-[11px] text-slate-500 mt-1 space-y-1 font-mono">
+                            <li>- 전방 버튼: SOS 긴급 비상 스위치 (물리 차단형)</li>
+                            <li>- 내부: ERM 진동 모터 (진동자 진폭 제어)</li>
+                            <li>- 칩셋: ESP32-C3 또는 nRF52840 SoC</li>
+                            <li>- 충전 포트: Type-C 및 리포 충전 보호 회로</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-800">3. 비상 알림 촉각 구동:</div>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            구조 기지국 및 내부 노드로부터 가스 초과 스코어 수집 시 2Hz 주기의 경보 진동을 인가하며, SOS를 누르면 대시보드 및 관제 텔레그램으로 즉각 긴급 알림을 중계합니다.
+                        </p>
+                    </div>
+                `,
+                drawingHtml: `
+                    <div class="w-48 h-48 bg-white border-2 border-embed-amber/30 rounded-3xl relative shadow-md p-4 flex flex-col justify-around items-center font-mono text-[9px]">
+                        
+                        <!-- Battery outline -->
+                        <div class="w-24 h-16 bg-slate-50 border border-slate-300 rounded flex flex-col items-center justify-center">
+                            <span class="text-slate-500">Li-Po Battery</span>
+                            <span class="text-[7px] text-slate-400">3.7V 350mAh</span>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <div class="w-14 h-12 bg-slate-100 border border-embed-cyan rounded flex flex-col items-center justify-center">
+                                <span class="font-bold text-embed-cyan">nRF52840</span>
+                                <span class="text-[6px] text-slate-400">BLE Adv</span>
+                            </div>
+
+                            <div class="w-14 h-12 bg-slate-50 border border-embed-rose rounded flex flex-col items-center justify-center">
+                                <span class="font-bold text-embed-rose">SOS BTN</span>
+                                <span class="text-[6px] text-slate-400">Tact Sw</span>
+                            </div>
+                        </div>
+                        
+                        <div class="absolute right-3 top-3 w-8 h-8 rounded-full bg-slate-100 border border-embed-amber flex items-center justify-center animate-pulse">
+                            <span class="text-[8px] text-embed-amber font-bold">VIB</span>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        // --- APP STATE ---
+        let platformState = {
+            gates: [false, false, false, false, false],
+            dependencies: [],
+            failsafes: [],
+            kpts: [],
+            memoryData: [210, 230, 240, 246, 246], // Historical ROM/RAM values in KB
+            powerData: [110, 95, 88, 85, 82],     // Power consumption trend in mA
+            wbsProgress: [100, 0, 0, 0, 0, 0, 0, 0],
+            wbsTodos: {} // ADDED: Map for tracking checked wbs todos like 'w0_todo_3': true
+        };
+
+        // --- CHARTS INSTANCES ---
+        let memoryChart = null;
+        let powerChart = null;
+        let errorChart = null;
+
+        let activeTab = 'devices';
+        let currentBlueprint = 'internal';
+
+        // --- APP INITIALIZER ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPlatformState();
+            updateDDay();
+            selectDeviceBlueprint('internal');
+            renderVStepDetail(1);
+            renderDependencies();
+            renderFailsafes();
+            renderKPTs();
+            renderWbsRoadmap();
+            initCharts();
+            updateVerifiedProgress();
+        });
+
+        // --- STATE MANAGEMENT ---
+        function loadPlatformState() {
+            const stored = localStorage.getItem('safenest_vmodel_state_v7'); // Unified v7 version key
+            if (stored) {
+                try {
+                    platformState = JSON.parse(stored);
+                } catch(e) {
+                    console.error("데이터 로드 에러, 기본값 리로드", e);
+                    loadDefaultPlatformData();
+                }
+            } else {
+                loadDefaultPlatformData();
+            }
+
+            // Fallback defensive checks to avoid undefined arrays on structural update
+            if (!platformState || typeof platformState !== 'object') {
+                platformState = {};
+            }
+            if (!platformState.gates || !Array.isArray(platformState.gates)) {
+                platformState.gates = [true, false, false, false, false];
+            }
+            if (!platformState.dependencies || !Array.isArray(platformState.dependencies) || platformState.dependencies.length === 0) {
+                platformState.dependencies = JSON.parse(JSON.stringify(INITIAL_DEPENDENCIES));
+            }
+            if (!platformState.failsafes || !Array.isArray(platformState.failsafes) || platformState.failsafes.length === 0) {
+                platformState.failsafes = JSON.parse(JSON.stringify(INITIAL_FAILSAFES));
+            }
+            if (!platformState.kpts || !Array.isArray(platformState.kpts) || platformState.kpts.length === 0) {
+                platformState.kpts = JSON.parse(JSON.stringify(INITIAL_KPTS));
+            }
+            if (!platformState.wbsProgress || !Array.isArray(platformState.wbsProgress)) {
+                platformState.wbsProgress = [100, 0, 0, 0, 0, 0, 0, 0];
+            }
+            if (!platformState.wbsTodos || typeof platformState.wbsTodos !== 'object') {
+                platformState.wbsTodos = {};
+            }
+            if (!platformState.memoryData) platformState.memoryData = [210, 230, 240, 246, 246];
+            if (!platformState.powerData) platformState.powerData = [110, 95, 88, 85, 82];
+        }
+
+        function loadDefaultPlatformData() {
+            platformState.gates = [true, false, false, false, false];
+            platformState.dependencies = JSON.parse(JSON.stringify(INITIAL_DEPENDENCIES));
+            platformState.failsafes = JSON.parse(JSON.stringify(INITIAL_FAILSAFES));
+            platformState.kpts = JSON.parse(JSON.stringify(INITIAL_KPTS));
+            platformState.wbsProgress = [100, 0, 0, 0, 0, 0, 0, 0];
+            platformState.wbsTodos = {};
+            platformState.memoryData = [210, 230, 240, 246, 246];
+            platformState.powerData = [110, 95, 88, 85, 82];
+        }
+
+        function saveAllData() {
+            localStorage.setItem('safenest_vmodel_state_v7', JSON.stringify(platformState));
+            alert("SafeNest 프로젝트 설계 WBS, 핀 맵, 리스크 매트릭스 및 회고 카드 데이터가 브라우저 로컬 스토리지에 안전하게 아카이브되었습니다.");
+            updateVerifiedProgress();
+        }
+
+        function saveStateSilently() {
+            localStorage.setItem('safenest_vmodel_state_v7', JSON.stringify(platformState));
+        }
+
+        function resetData() {
+            if(confirm("모든 WBS 진척도, 기획 데이터와 KPT 회고 보드가 완전 초기화됩니다. 계속 진행할까요?")) {
+                loadDefaultPlatformData();
+                localStorage.removeItem('safenest_vmodel_state_v7');
+                location.reload();
+            }
+        }
+
+        // --- D-DAY COUNTER ---
+        function updateDDay() {
+            const now = new Date().getTime();
+            const diff = CONTEST_DEADLINE - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            const txt = document.getElementById('dday-text');
+            if(days > 0) {
+                txt.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> D-${days}`;
+            } else if (days === 0) {
+                txt.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1 animate-pulse"></i> D-Day 오늘 마감`;
+            } else {
+                txt.innerHTML = `<i class="fa-solid fa-circle-check mr-1 text-embed-green"></i> 예선 접수 마감`;
+            }
+        }
+
+        // --- TAB SWITCHER ---
+        function switchTab(tabId) {
+            document.getElementById('tab-content-devices').classList.add('hidden');
+            document.getElementById('tab-content-vmodel').classList.add('hidden');
+            document.getElementById('tab-content-wiring').classList.add('hidden');
+            document.getElementById('tab-content-resource').classList.add('hidden');
+            document.getElementById('tab-content-failsafe').classList.add('hidden');
+            
+            document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+
+            const btns = document.querySelectorAll('nav button');
+            btns.forEach(b => {
+                b.className = "flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition duration-150";
+            });
+
+            document.getElementById(`tab-btn-${tabId}`).className = "flex-1 min-w-[150px] px-4 py-3 font-bold text-xs rounded-lg bg-embed-cyan text-white flex items-center justify-center gap-2 transition duration-150";
+            
+            activeTab = tabId;
+
+            if(tabId === 'resource') {
+                setTimeout(initCharts, 50);
+            } else if (tabId === 'wiring') {
+                renderDependencies();
+            } else if (tabId === 'failsafe') {
+                renderFailsafes();
+                renderKPTs();
+            } else if (tabId === 'vmodel') {
+                renderWbsRoadmap();
+            }
+        }
+
+        // --- TAB 1: BLUEPRINT DESIGN ---
+        function selectDeviceBlueprint(devKey) {
+            currentBlueprint = devKey;
+            
+            document.getElementById('dev-btn-internal').className = "px-3 py-1 text-[10px] font-bold rounded-md text-slate-500";
+            document.getElementById('dev-btn-entrance').className = "px-3 py-1 text-[10px] font-bold rounded-md text-slate-500";
+            document.getElementById('dev-btn-wearable').className = "px-3 py-1 text-[10px] font-bold rounded-md text-slate-500";
+            
+            document.getElementById(`dev-btn-${devKey}`).className = "px-3 py-1 bg-white shadow-sm text-[10px] font-bold rounded-md text-embed-cyan";
+            
+            const data = DEVICE_BLUEPRINTS[devKey];
+            document.getElementById('dev-spec-title').innerText = data.title;
+            document.getElementById('dev-spec-class').innerText = data.class;
+            document.getElementById('dev-spec-body').innerHTML = data.descHtml;
+            document.getElementById('blueprint-graphics-container').innerHTML = data.drawingHtml;
+        }
+
+        // --- TAB 2: V-MODEL GATES & WBS ROADMAP ---
+        function selectVStep(stepNum) {
+            for(let i=1; i<=5; i++) {
+                const el = document.getElementById(`vstep-lg-${i}`);
+                if(i === stepNum) {
+                    el.className = "p-3.5 rounded-xl border border-embed-cyan bg-embed-card cursor-pointer transition hover:border-embed-cyan step-active";
+                } else {
+                    el.className = "p-3.5 rounded-xl border border-embed-border bg-embed-card cursor-pointer transition hover:border-embed-cyan";
+                }
+            }
+            renderVStepDetail(stepNum);
+        }
+
+        function renderVStepDetail(stepNum) {
+            const data = VMODEL_GATES[stepNum - 1];
+            document.getElementById('proc-gate-title').innerText = data.title;
+            
+            const entryList = document.getElementById('proc-entry-list');
+            entryList.innerHTML = data.entry.map(e => `
+                <li class="flex items-start gap-1.5"><i class="fa-solid fa-play text-embed-cyan text-[8px] mt-1.5 animate-pulse"></i> <span>${e}</span></li>
+            `).join('');
+
+            const stepList = document.getElementById('proc-steps-list');
+            stepList.innerHTML = data.steps.map(s => `
+                <li class="leading-normal">${s}</li>
+            `).join('');
+
+            const exitList = document.getElementById('proc-exit-list');
+            exitList.innerHTML = data.exit.map(e => `
+                <li class="flex items-start gap-1.5"><i class="fa-solid fa-square-check text-embed-green text-[10px] mt-1"></i> <span>${e}</span></li>
+            `).join('');
+            
+            document.getElementById('console-title').innerText = data.title;
+            document.getElementById('console-desc').innerText = data.desc;
+            
+            const hwContainer = document.getElementById('console-hw');
+            hwContainer.innerHTML = data.hw.map(h => `
+                <li class="flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-embed-amber text-[9px]"></i> ${h}</li>
+            `).join('');
+
+            const outputContainer = document.getElementById('console-outputs');
+            outputContainer.innerHTML = data.outputs.map(o => `
+                <li class="flex items-center gap-1.5"><i class="fa-solid fa-file-pdf text-embed-cyan text-[10px]"></i> ${o}</li>
+            `).join('');
+            
+            for(let i=1; i<=5; i++) {
+                document.getElementById(`gate-check-lg-${i}`).checked = platformState.gates[i-1];
+            }
+        }
+
+        function toggleGateLg(gateNum, event) {
+            event.stopPropagation();
+            platformState.gates[gateNum - 1] = document.getElementById(`gate-check-lg-${gateNum}`).checked;
+            updateVerifiedProgress();
+            saveStateSilently();
+        }
+
+        function updateVerifiedProgress() {
+            const verifiedCount = platformState.gates.filter(g => g).length;
+            const progressVal = Math.round((verifiedCount / 5) * 100);
+            document.getElementById('vmodel-progress').innerText = `${progressVal}% Verified`;
+        }
+
+        // Rendering Weekly WBS Roadmap cards
+        function renderWbsRoadmap() {
+            const container = document.getElementById('wbs-cards-container');
+            container.innerHTML = '';
+
+            WEEKLY_ROADMAP_DATA.forEach((w) => {
+                const card = document.createElement('div');
+                const prog = platformState.wbsProgress[w.week];
+                const stateText = prog === 100 ? '완료' : prog === 0 ? '미시작' : '진행중';
+                const stateColor = prog === 100 ? 'text-embed-green' : prog === 0 ? 'text-slate-400' : 'text-embed-amber';
+                const borderActive = prog > 0 && prog < 100 ? 'border-embed-amber/40 shadow-md glow-cyan' : prog === 100 ? 'border-embed-green/40 shadow-sm' : 'border-embed-border';
+
+                card.className = `p-4 rounded-xl bg-white border ${borderActive} flex flex-col justify-between space-y-3.5 text-xs cursor-pointer hover:border-embed-cyan hover:shadow-md transition duration-150`;
+                card.setAttribute('onclick', `openWbsModal(${w.week})`);
+                
+                card.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-mono font-bold text-slate-400 block">${w.duration}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-slate-100 text-slate-600 font-mono">W${w.week}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-800">${w.title}</h4>
+                        <p class="text-[10.5px] text-slate-500 leading-normal font-medium">${w.desc}</p>
+                        <div class="text-[9.5px] bg-slate-50 border border-slate-100 p-1.5 rounded text-slate-500 font-medium leading-normal">
+                            🎯 <strong>DoD:</strong> ${w.dod}
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-1.5 flex-1" onclick="event.stopPropagation()">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div class="${prog === 100 ? 'bg-embed-green' : prog === 0 ? 'bg-slate-200' : 'bg-embed-cyan'} h-1.5 rounded-full" style="width: ${prog}%"></div>
+                            </div>
+                            <span class="font-mono text-[9px] font-bold text-slate-500 w-8 text-right">${prog}%</span>
+                        </div>
+                        <span class="text-[9px] font-bold ${stateColor} ml-2">${stateText}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ADDED: Interactive WBS To-Do Modal Logic
+        let activeModalWeek = 0;
+
+        function openWbsModal(weekNum) {
+            activeModalWeek = weekNum;
+            const wData = WEEKLY_ROADMAP_DATA[weekNum];
+            const todos = WBS_WEEKLY_TODOS[weekNum];
+
+            document.getElementById('wbs-modal-week-label').innerText = `Week ${weekNum}`;
+            document.getElementById('wbs-modal-title').innerText = wData.title;
+            document.getElementById('wbs-modal-desc').innerText = wData.desc;
+            document.getElementById('wbs-modal-dod').innerText = wData.dod;
+
+            // Render To-Do Checklist
+            const listContainer = document.getElementById('wbs-modal-todo-list');
+            listContainer.innerHTML = '';
+
+            todos.forEach((todo, idx) => {
+                const todoKey = `w${weekNum}_todo_${idx}`;
+                const checked = platformState.wbsTodos[todoKey] ? 'checked' : '';
+                const item = document.createElement('label');
+                item.className = "flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-100 cursor-pointer transition select-none text-[11px] font-medium text-slate-600";
+                item.innerHTML = `
+                    <input type="checkbox" ${checked} onchange="toggleWbsTodo(${weekNum}, ${idx}, this.checked)" class="w-3.5 h-3.5 mt-0.5 rounded border-embed-border text-embed-cyan focus:ring-embed-cyan cursor-pointer">
+                    <span class="leading-normal">${todo}</span>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            updateModalProgressLabel(weekNum);
+            document.getElementById('wbs-modal').classList.remove('hidden');
+        }
+
+        function closeWbsModal() {
+            document.getElementById('wbs-modal').classList.add('hidden');
+            renderWbsRoadmap(); // Refresh main WBS roadmap cards progress bar visual
+        }
+
+        function toggleWbsTodo(weekNum, idx, isChecked) {
+            const todoKey = `w${weekNum}_todo_${idx}`;
+            if(isChecked) {
+                platformState.wbsTodos[todoKey] = true;
+            } else {
+                delete platformState.wbsTodos[todoKey];
+            }
+
+            // Recalculate WBS week progress
+            const todosCount = WBS_WEEKLY_TODOS[weekNum].length;
+            let checkedCount = 0;
+            for(let i=0; i<todosCount; i++) {
+                if(platformState.wbsTodos[`w${weekNum}_todo_${i}`]) checkedCount++;
+            }
+
+            const newProgress = Math.round((checkedCount / todosCount) * 100);
+            platformState.wbsProgress[weekNum] = newProgress;
+
+            updateModalProgressLabel(weekNum);
+            saveStateSilently();
+        }
+
+        function updateModalProgressLabel(weekNum) {
+            const prog = platformState.wbsProgress[weekNum];
+            document.getElementById('wbs-modal-progress-label').innerText = `주간 진척도: ${prog}% 완료`;
+        }
+
+        // --- TAB 3: HW WIRING PIN OUTS & DEPENDENCIES ---
+        function renderDependencies() {
+            const wTableBody = document.getElementById('wiring-table-body');
+            wTableBody.innerHTML = '';
+            
+            PIN_MAPPING_DATA.forEach((item) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-embed-border/30 text-[11px]";
+                tr.innerHTML = `
+                    <td class="py-2.5 px-2 font-bold text-slate-800">${item.device}</td>
+                    <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${item.interface==='I2C'?'bg-embed-cyan/15 text-embed-cyan border border-embed-cyan/30':item.interface==='UART'?'bg-embed-purple/15 text-embed-purple border border-embed-purple/30':'bg-embed-amber/15 text-embed-amber border border-embed-amber/30'}">${item.interface}</span></td>
+                    <td class="py-2.5 px-2 text-slate-500">${item.pinName}</td>
+                    <td class="py-2.5 px-2 text-embed-cyan font-bold">${item.espPin}</td>
+                    <td class="py-2.5 px-2 text-embed-purple">${item.stmPin}</td>
+                    <td class="py-2.5 px-2 text-right text-slate-500">${item.voltage}</td>
+                `;
+                wTableBody.appendChild(tr);
+            });
+
+            const depContainer = document.getElementById('wiring-dep-list');
+            depContainer.innerHTML = '';
+
+            platformState.dependencies.forEach((d) => {
+                const card = document.createElement('div');
+                card.className = "p-3.5 rounded-xl bg-white border border-embed-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs shadow-sm";
+                
+                let progressState = d.progress === 100 ? 'text-embed-green' : d.progress === 0 ? 'text-slate-400' : 'text-embed-amber';
+                
+                card.innerHTML = `
+                    <div class="space-y-1 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800">${d.name}</span>
+                            <span class="text-[9px] font-mono text-slate-400 font-normal">(${d.dur})</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500">➔ 의존 타겟: <strong class="text-embed-cyan font-mono">${d.target}</strong></div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 w-full md:w-auto font-mono">
+                        <div class="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden" onclick="event.stopPropagation()">
+                            <div class="${d.barColor} h-1.5 rounded-full" style="width: ${d.progress}%"></div>
+                        </div>
+                        <input type="number" min="0" max="100" value="${d.progress}" onchange="updateDependencyProgress(${d.id}, this.value)" class="w-12 bg-slate-50 border border-embed-border rounded text-center text-[10px] font-bold text-slate-800">
+                        <span class="text-[10px] ${progressState} font-bold w-12 text-right">${d.progress === 100 ? '완료' : d.progress === 0 ? '미시작' : '개발중'}</span>
+                    </div>
+                `;
+                depContainer.appendChild(card);
+            });
+        }
+
+        // --- TAB 4: RESOURCE PROFILE & HIL CHARTS ---
+        function initCharts() {
+            const memCtx = document.getElementById('memoryChartTab').getContext('2d');
+            if(memoryChart) memoryChart.destroy();
+            memoryChart = new Chart(memCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Gate 1', 'Gate 2', 'Gate 3', 'Gate 4', 'Gate 5'],
+                    datasets: [{
+                        label: 'ROM/RAM (KB)',
+                        data: platformState.memoryData,
+                        borderColor: '#0891b2',
+                        backgroundColor: 'rgba(8, 145, 178, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { min: 100, max: 300, grid: { color: '#cbd5e1' }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } }
+                    }
+                }
+            });
+
+            const powerCtx = document.getElementById('powerChartTab').getContext('2d');
+            if(powerChart) powerChart.destroy();
+            powerChart = new Chart(powerCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Gate 1', 'Gate 2', 'Gate 3', 'Gate 4', 'Gate 5'],
+                    datasets: [{
+                        label: '소비 전류 (mA)',
+                        data: platformState.powerData,
+                        borderColor: '#d97706',
+                        backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { min: 50, max: 150, grid: { color: '#cbd5e1' }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } }
+                    }
+                }
+            });
+
+            const errorCtx = document.getElementById('errorChartTab').getContext('2d');
+            if(errorChart) errorChart.destroy();
+            errorChart = new Chart(errorCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0.1Hz', '0.2Hz (호흡)', '0.3Hz (호흡)', '0.4Hz', '0.5Hz'],
+                    datasets: [
+                        {
+                            label: '시뮬레이션 (MATLAB)',
+                            data: [1.2, 8.5, 9.1, 2.3, 0.9],
+                            backgroundColor: 'rgba(124, 58, 237, 0.4)',
+                            borderColor: '#7c3aed',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '실물 HIL 측정치',
+                            data: [1.3, 8.2, 8.8, 2.5, 0.9],
+                            backgroundColor: 'rgba(22, 163, 74, 0.6)',
+                            borderColor: '#16a34a',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#cbd5e1' }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
+        function recalculateHILErrorsTab() {
+            const newHIL = [
+                (1.1 + Math.random()*0.3).toFixed(1),
+                (8.0 + Math.random()*0.6).toFixed(1),
+                (8.5 + Math.random()*0.6).toFixed(1),
+                (2.1 + Math.random()*0.5).toFixed(1),
+                (0.8 + Math.random()*0.2).toFixed(1)
+            ];
+            
+            errorChart.data.datasets[1].data = newHIL;
+            errorChart.update();
+
+            const matchingRate = (92 + Math.random()*5).toFixed(1);
+            document.getElementById('matching-rate-display-tab').innerText = `${matchingRate} %`;
+        }
+
+        // --- TAB 5: FAIL-SAFE MATRIX & KPT RETROSPECTIVE ---
+        function renderFailsafes() {
+            const container = document.getElementById('failsafe-matrix-tab');
+            container.innerHTML = '';
+
+            platformState.failsafes.forEach((f) => {
+                const card = document.createElement('div');
+                card.className = "p-3.5 rounded-xl bg-white border border-embed-border text-xs space-y-2 shadow-sm";
+                card.innerHTML = `
+                    <div class="font-bold text-embed-rose flex items-center gap-1.5">
+                        <i class="fa-solid fa-triangle-exclamation"></i> IF: ${f.condition}
+                    </div>
+                    <div class="text-[10.5px] text-embed-green bg-embed-green/5 border border-embed-green/20 p-2 rounded leading-relaxed font-sans">
+                        💡 <strong>FAIL-SAFE ACTION:</strong> ${f.action}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderKPTs() {
+            const colKeep = document.getElementById('kpt-col-keep-tab');
+            const colProblem = document.getElementById('kpt-col-problem-tab');
+            const colTry = document.getElementById('kpt-col-try-tab');
+
+            colKeep.innerHTML = '';
+            colProblem.innerHTML = '';
+            colTry.innerHTML = '';
+
+            platformState.kpts.forEach((k) => {
+                const card = document.createElement('div');
+                card.className = "p-3 rounded-lg bg-white border border-embed-border text-[11px] leading-relaxed relative group hover:border-embed-cyan/30 transition duration-150 text-slate-700 shadow-sm";
+                card.innerHTML = `
+                    <p class="pr-6 font-medium">${k.content}</p>
+                    <button onclick="deleteKPT(${k.id})" class="absolute top-2 right-2 text-slate-400 hover:text-embed-rose opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+
+                if(k.type === 'keep') colKeep.appendChild(card);
+                else if (k.type === 'problem') colProblem.appendChild(card);
+                else if (k.type === 'try') colTry.appendChild(card);
+            });
+        }
+
+        function addNewKPTCard() {
+            document.getElementById('kpt-modal').classList.remove('hidden');
+        }
+
+        function closeKPTModal() {
+            document.getElementById('kpt-modal').classList.add('hidden');
+            document.getElementById('kpt-input-content').value = '';
+        }
+
+        function submitKPTCard() {
+            const type = document.getElementById('kpt-select-type').value;
+            const content = document.getElementById('kpt-input-content').value.trim();
+
+            if(!content) {
+                alert("회고 내용을 적어주세요.");
+                return;
+            }
+
+            const newCard = {
+                id: Date.now(),
+                type: type,
+                content: content
+            };
+
+            platformState.kpts.push(newCard);
+            renderKPTs();
+            saveStateSilently();
+            closeKPTModal();
+        }
+
+        function deleteKPT(id) {
+            platformState.kpts = platformState.kpts.filter(k => k.id !== id);
+            renderKPTs();
+            saveStateSilently();
+        }
+    </script>
+</body>
+</html>
