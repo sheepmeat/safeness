@@ -1250,60 +1250,162 @@ void parseRadarPacket(uint8_t *buf, int len) {
                         </div>
                     </div>
 
-                    <!-- On-Device AI Integration Strategy Card -->
-                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                    <!-- On-Device AI Integration Strategy Card (Deep Dive Edition) -->
+                    <div class="glass-card rounded-2xl p-6 space-y-6">
                         <div class="flex justify-between items-center border-b border-embed-border pb-3">
                             <div>
-                                <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-cyan/10 text-embed-cyan border border-embed-cyan/20 font-bold font-mono">Edge Intelligence Strategy</span>
+                                <span class="text-[9px] px-2 py-0.5 rounded-full bg-embed-cyan/10 text-embed-cyan border border-embed-cyan/20 font-bold font-mono">Edge Intelligence & On-Device AI Deep Dive</span>
                                 <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mt-1.5">
-                                    <i class="fa-solid fa-microchip text-embed-cyan"></i> 라즈베리파이 온디바이스 AI 데이터 분석 및 활용 방안
+                                    <i class="fa-solid fa-microchip text-embed-cyan"></i> 라즈베리파이 5 온디바이스 AI 데이터 분석 및 활용 상세 가이드
                                 </h3>
-                                <p class="text-xs text-slate-500 mt-1">밀폐공간 데이터를 단순 룰 기반을 넘어 온디바이스 AI로 정밀 분석하기 위한 세부 구현 전략입니다. 보고서 보강 시 핵심 기술로 추가하십시오.</p>
+                                <p class="text-xs text-slate-500 mt-1">밀폐공간 및 차량 내 지능형 잔류 감지를 위해 룰 기반의 한계를 극복하는 엣지 AI 알고리즘의 세부 아키텍처 및 구현 설계입니다.</p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Column 1: Models & Pipeline -->
-                            <div class="space-y-3">
+                        <!-- 1. 개념 정의: 이게 왜 필요하고 무엇인가? -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-embed-cyan"></span> 1. 온디바이스 AI의 정의 및 필요성 (Concept & Rationale)
+                            </h4>
+                            <div class="pl-3.5 space-y-2 text-[11px] text-slate-600 leading-relaxed font-medium">
+                                <p>
+                                    <strong>개념 정의</strong>: 온디바이스 AI(On-Device AI)는 센서 데이터를 외부 클라우드 서버로 송신하여 판정하는 기존의 서버 중심 구조와 달리, <strong>라즈베리파이 5(Broadcom BCM2712 Quad-core ARM Cortex-A76 @ 2.4GHz) 내부 연산 자원만을 활용하여 데이터를 가공, 추론, 최종 판단까지 직접 수행</strong>하는 엣지 인텔리전스 기술입니다.
+                                </p>
+                                <p>
+                                    <strong>필수적인 이유 (룰 기반의 한계 극복)</strong>:
+                                    기존 임베디드 장비의 단순 '임계값(Threshold) 비교' 방식은 다음과 같은 상황에서 무력합니다.
+                                </p>
+                                <ul class="list-disc pl-4 space-y-1 text-slate-500 text-[10.5px]">
+                                    <li>이산화탄소가 서서히 올라갈 때와 작업자의 호흡으로 인한 자연적인 CO2 상승을 단순 수치만으로 구별하지 못함.</li>
+                                    <li>작업자가 기절하거나 잠들어 호흡 외에 움직임이 전혀 없을 때, PIR 센서는 무반응하므로 재실 여부를 놓침.</li>
+                                    <li>차량 내부 시트 열선이나 강한 햇빛으로 가열된 물체를 인체 온도로 착각하여 지속적인 오경보(False Alarm) 유발.</li>
+                                </ul>
+                                <p>
+                                    SafeNest는 이러한 한계를 극복하기 위해 다중 센서 데이터를 시계열(Time-Series)로 묶어 패턴 분석이 가능한 <strong>인공신경망 추론 엔진</strong>을 기기 내부에서 구동합니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 2. 어디에 이용하는가? (적용 시나리오) -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-embed-purple"></span> 2. 핵심 적용 분야 및 분석 시나리오 (Application Scenarios)
+                            </h4>
+                            <div class="pl-3.5 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
-                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-network-wired text-embed-purple"></i> 1. 시계열 모델 및 경량화 추론 엔진
-                                    </h4>
-                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
-                                        - <strong>1D-CNN / LSTM 이상 생체 신호 감지</strong>: mmWave 레이더의 60GHz 생체 파형을 분석하여 실신, 수면 무호흡(Apnea) 등 응급 생체 패턴을 실시간 인지합니다.<br>
-                                        - <strong>TFLite / ONNX 양자화(Quantization)</strong>: FP16 또는 INT8 양자화를 적용해 모델 크기를 90% 이상 줄이고, 라즈베리파이 5의 쿼드코어 CPU에서 추론 속도를 20ms 내외로 최적화합니다.
+                                    <h5 class="font-bold text-[11px] text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-heart-pulse text-embed-rose"></i> mmWave 생체 파동 정밀 감지
+                                    </h5>
+                                    <p class="text-[10px] text-slate-500 leading-relaxed font-medium">
+                                        <strong>원리</strong>: MR60BHA1 레이더가 출력하는 60GHz 반사파 위상 변위 데이터에서 호흡수 및 심박 주기를 비동기로 수집합니다.<br>
+                                        <strong>AI 역할</strong>: <strong>1D-CNN 및 LSTM 모델</strong>을 적용하여 10초 윈도우의 호흡 곡선 파형을 분석합니다. 단순 생존 반응뿐 아니라 호흡 간격이 급격히 불규칙해지는 '질식성 빈호흡', 호흡이 정지되는 '가사/무호흡' 상태를 정확히 분류하여 사고 징후를 판별합니다.
                                     </p>
                                 </div>
                                 <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
-                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-gears text-embed-blue"></i> 2. 융합 피처 엔지니어링 (Multi-Sensor Features)
-                                    </h4>
-                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
-                                        - <strong>시계열 파동 피처 추출</strong>: 최근 30초 슬라이딩 윈도우 내에서 호흡수 평균, 분산, 주파수 도메인 FFT Peak 에너지를 추출해 학습 입력값으로 활용합니다.<br>
-                                        - <strong>이종 센서 결합</strong>: CO2 유해가스 축적 가속도(미분값)와 PIR 재실 지속시간, MLX90640 열화상의 인체 열 분포 변화율을 단일 피처 벡터로 병합합니다.
+                                    <h5 class="font-bold text-[11px] text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-wind text-embed-blue"></i> 유해가스 누출 및 위험 시점 예측
+                                    </h5>
+                                    <p class="text-[10px] text-slate-500 leading-relaxed font-medium">
+                                        <strong>원리</strong>: SCD40 NDIR 센서로부터 이산화탄소(CO2) 농도를 1초마다 지속 쿼리합니다.<br>
+                                        <strong>AI 역할</strong>: <strong>LightGBM / XGBoost Regressor</strong> 머신러닝 모델을 활용합니다. 과거 5분 동안의 이산화탄소 상승 가속도(1차/2차 시간 미분값) 및 축적 경향을 분석하여, 현재 가스 누출 속도에 기댄 '임계치 도달 예상 시점(Time-to-Danger)'을 3분 앞서 예측해 선제 환기 조치를 처리합니다.
+                                    </p>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
+                                    <h5 class="font-bold text-[11px] text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-temperature-three-quarters text-embed-amber"></i> 열화상-PIR 오탐 억제 필터
+                                    </h5>
+                                    <p class="text-[10px] text-slate-500 leading-relaxed font-medium">
+                                        <strong>원리</strong>: PIR 센서의 디지털 이벤트 격발 시 MLX90640 열화상 카메라의 32x24 온도 매트릭스를 읽어옵니다.<br>
+                                        <strong>AI 역할</strong>: <strong>MobileNetV3 기반 경량 2D-CNN 모델</strong>을 통해 온도 맵 내 고온 스팟의 형태와 경계를 공간 합성곱(Spatial Convolution) 연산합니다. 뜨겁게 달아오른 사물(차량 시트, 온풍기 토출구)과 실제 움직이는 인체 열 분포 특성을 구분해 오경보를 원천 차단합니다.
                                     </p>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Column 2: Pipeline & Fail-safe -->
-                            <div class="space-y-3">
-                                <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
-                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-chart-line text-embed-green"></i> 3. 엣지 AI 분석 파이프라인 (Data Pipeline)
-                                    </h4>
-                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
-                                        - <strong>1초 주기 비동기 추론</strong>: FastAPI 백엔드 리스너 내에서 센서 데이터를 수집하는 즉시 백그라운드 스레드에서 TFLite 인터프리터를 가동해 추론 결과를 연산합니다.<br>
-                                        - <strong>SQLite 연동 로깅</strong>: 감지된 행동 패턴 분류(정상, 정지 잔류, 가스 누출 의심, 생체 이상) 결과를 타임스탬프와 함께 로컬 DB에 자동 적재해 예측 정밀도를 모니터링합니다.
-                                    </p>
+                        <!-- 3. 어떻게 쓰는가? (구현 방법 및 탑재 프로세스) -->
+                        <div class="space-y-3">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-embed-green"></span> 3. 온디바이스 AI 구현 및 적용 방법 (Execution Protocol)
+                            </h4>
+                            
+                            <div class="pl-3.5 space-y-4">
+                                <!-- Step-by-Step Flow -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10.5px]">
+                                    <div class="space-y-1.5">
+                                        <span class="text-[9px] font-bold text-embed-cyan bg-embed-cyan/10 px-1.5 py-0.5 rounded uppercase">Step 1. Feature Pipeline</span>
+                                        <h6 class="font-bold text-slate-800">다중 센서 시계열 전처리</h6>
+                                        <p class="text-slate-500 leading-normal">
+                                            1초마다 입수되는 `[CO2(ppm), 호흡수(bpm), 심박수(bpm), PIR상태, 열화상최고온도]` 5개 특징점을 30초 크기(`30 x 5` Matrix)의 슬라이딩 윈도우 시퀀스로 묶어 Z-Score 정규화 처리를 수행해 입력 데이터를 생성합니다.
+                                        </p>
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <span class="text-[9px] font-bold text-embed-purple bg-embed-purple/10 px-1.5 py-0.5 rounded uppercase">Step 2. Quantization</span>
+                                        <h6 class="font-bold text-slate-800">모델 학습 및 INT8 경량 양자화</h6>
+                                        <p class="text-slate-500 leading-normal">
+                                            PC(GPU 환경)에서 다중 센서 융합 데이터셋으로 LSTM/CNN 모델을 학습시킨 뒤, `tf.lite.TFLiteConverter`를 가동해 **INT8 가중치 양자화(Weight Quantization)**를 적용합니다. 모델 크기를 90% 이상 감축(1MB 미만)하여 파이 내 리소스를 절약합니다.
+                                        </p>
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <span class="text-[9px] font-bold text-embed-green bg-embed-green/10 px-1.5 py-0.5 rounded uppercase">Step 3. Run Daemon</span>
+                                        <h6 class="font-bold text-slate-800">비동기 백그라운드 추론 실행</h6>
+                                        <p class="text-slate-500 leading-normal">
+                                            라즈베리파이 5의 가상환경 내에 `tflite-runtime`을 구축하고, 백그라운드 데몬 스레드에서 1초 주기로 전처리된 시퀀스를 불러와 모델 추론(`Interpreter.invoke()`)을 비동기로 가동하여 분석 결과를 대시보드로 스트리밍합니다.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="p-4 bg-slate-50 rounded-xl border border-embed-border space-y-2">
-                                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-shield-halved text-embed-rose"></i> 4. AI 추론 예외 및 실시간 폴백(Fallback)
-                                    </h4>
-                                    <p class="text-[10.5px] leading-relaxed text-slate-600 font-medium">
-                                        - <strong>룰 기반 이중 보장(Failsafe)</strong>: 센서 노이즈나 메모리 누수로 AI 추론 루프가 100ms 이상 지연되거나 예외가 발생할 경우, 사전에 정의된 물리 임계값(CO2 > 1000ppm 등) 룰 기반 엔진이 비상 격발됩니다.<br>
-                                        - <strong>워치독 감시</strong>: AI 스레드 작동 유무를 메인 감시 데몬이 주기적으로 확인하여 정지 시 스레드를 즉시 재시작합니다.
-                                    </p>
+
+                                <!-- Python Implementation Reference Code -->
+                                <div class="space-y-2">
+                                    <h5 class="font-bold text-[10.5px] text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-brands fa-python text-embed-green"></i> 엣지 AI 구동을 위한 파이썬 추론 엔진 핵심 뼈대 코드
+                                    </h5>
+                                    <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[9.5px] text-embed-green overflow-x-auto leading-relaxed font-mono">
+import numpy as np
+import tflite_runtime.interpreter as tflite
+
+class EdgeAIEngine:
+    def __init__(self, model_path="safenest_lstm_quant.tflite"):
+        # 1. 모델 로드 및 메모리 버퍼 레이아웃 할당
+        self.interpreter = tflite.Interpreter(model_path=model_path)
+        self.interpreter.allocate_tensors()
+        
+        # 2. 모델 입출력 텐서 인덱스 정보 파싱
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
+        
+        # 3. 입력 사양 확인 (예: [1, 30, 5] -> 1개 배치, 30초 윈도우, 5개 피처)
+        self.input_shape = self.input_details[0]['shape']
+
+    def preprocess(self, raw_buffer, stats):
+        # raw_buffer: shape (30, 5)의 센서 원시 데이터 리스트
+        # stats: 학습 데이터셋의 평균(mean) 및 표준편차(std) - shape (5,)
+        sequence = np.array(raw_buffer, dtype=np.float32)
+        
+        # Z-Score 정규화 수행
+        normalized = (sequence - stats['mean']) / (stats['std'] + 1e-8)
+        
+        # 배치 차원 추가 -> shape [1, 30, 5]
+        return np.expand_dims(normalized, axis=0)
+
+    def predict(self, input_data):
+        try:
+            # 4. 입력 텐서에 전처리 데이터 로드
+            self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
+            
+            # 5. 하드웨어 추론 엔진 실행
+            self.interpreter.invoke()
+            
+            # 6. 출력 텐서에서 각 클래스별 확률값 또는 회귀 스코어 추출
+            output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
+            
+            # 예: Softmax 분류 결과 [정상확률, 주의확률, 기절/위험확률] 중 최댓값 획득
+            predicted_class = np.argmax(output_data[0])
+            confidence = float(output_data[0][predicted_class])
+            
+            return predicted_class, confidence
+        except Exception as e:
+            print(f"On-Device AI Inference Failed: {e}")
+            return -1, 0.0 # 에러 플래그 리턴하여 룰 엔진 폴백 유도</pre>
                                 </div>
                             </div>
                         </div>
