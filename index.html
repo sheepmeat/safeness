@@ -555,8 +555,8 @@
                                         <th class="py-2.5 px-2">대상 장치</th>
                                         <th class="py-2.5 px-2">프로토콜</th>
                                         <th class="py-2.5 px-2">센서 핀</th>
-                                        <th class="py-2.5 px-2 text-embed-cyan">ESP32-S3</th>
-                                        <th class="py-2.5 px-2 text-embed-purple">STM32H7</th>
+                                        <th class="py-2.5 px-2 text-embed-cyan">XIAO ESP32C6 (무선 노드)</th>
+                                        <th class="py-2.5 px-2 text-embed-purple">라즈베리파이 5 (게이트웨이)</th>
                                         <th class="py-2.5 px-2 text-right">전원</th>
                                     </tr>
                                 </thead>
@@ -569,7 +569,7 @@
                         <div class="p-3 bg-slate-50 rounded-xl border border-embed-border text-[10px] text-slate-600 leading-relaxed font-sans space-y-1">
                             <div class="font-bold text-slate-800"><i class="fa-solid fa-circle-exclamation text-embed-amber mr-1"></i> I2C 버스 공유 및 풀업(Pull-up) 매커니즘 설명</div>
                             <p class="text-[9.5px]">
-                                열화상(MLX90640), CO₂(SCD40), 온습도(BME680) 센서는 동일한 I2C 버스 라인(SDA: GPIO 11, SCL: GPIO 12)을 공유하여 ESP32-S3의 GPIO 핀 소모를 극적으로 최소화합니다. 슬레이브 주소(MLX90640: 0x33, SCD40: 0x62)의 충돌이 없는 구조로 설계되었으나, 3개의 센서가 1개의 라인에 집중되므로 외장 4.7kΩ 물리 풀업 저항을 회로상에 반드시 병렬 연결하여 전압 레벨 강화 및 신호 품질 왜곡을 차단해야 합니다.
+                                라즈베리파이 5의 물리 I2C 1번 버스 라인(SDA: GPIO 2 - Pin 3, SCL: GPIO 3 - Pin 5)을 이산화탄소 센서(SCD40, 주소 0x62)와 열화상 센서(MLX90640, 주소 0x33)가 병렬로 공유합니다. 주소 충돌은 발생하지 않으나, 신호 선로 안정성 확보 및 전압 레벨 유지를 위해 SDA와 SCL 신호선에 각각 4.7kΩ 외장 풀업 저항을 전원(3.3V) 라인과 병렬 결합해 주어야 합니다.
                             </p>
                         </div>
                     </div>
@@ -1805,27 +1805,25 @@ class EdgeAIEngine:
         };
 
         const PIN_MAPPING_DATA = [
-            { id: 1, device: "60GHz mmWave 레이더 (MR60BHA1)", interface: "UART", pinName: "TXD / RXD", espPin: "GPIO 17 / GPIO 18", stmPin: "USART2_TX(PD5) / USART2_RX(PD6)", voltage: "5V" },
-            { id: 2, device: "열화상 센서 (MLX90640)", interface: "I2C", pinName: "SDA / SCL", espPin: "GPIO 11 / GPIO 12", stmPin: "I2C1_SDA(PB9) / I2C1_SCL(PB8)", voltage: "3.3V" },
-            { id: 3, device: "CO₂ 가스 센서 (SCD40)", interface: "I2C", pinName: "SDA / SCL", espPin: "GPIO 11 / GPIO 12 (Bus Share)", stmPin: "I2C1_SDA(PB9) / I2C1_SCL(PB8)", voltage: "3.3V" },
-            { id: 4, device: "온습도 센서 (BME680)", interface: "I2C", pinName: "SDA / SCL", espPin: "GPIO 11 / GPIO 12 (Bus Share)", stmPin: "I2C1_SDA(PB9) / I2C1_SCL(PB8)", voltage: "3.3V" },
-            { id: 5, device: "출입 IR/ToF 센서 A", interface: "GPIO", pinName: "INT / GPIO", espPin: "GPIO 4", stmPin: "GPIO_PIN_4(PA4)", voltage: "3.3V" },
-            { id: 6, device: "출입 IR/ToF 센서 B", interface: "GPIO", pinName: "INT / GPIO", espPin: "GPIO 5", stmPin: "GPIO_PIN_5(PA5)", voltage: "3.3V" },
-            { id: 7, device: "문 자석 센서 (Reed Sw)", interface: "GPIO", pinName: "GPIO (Pull-up)", espPin: "GPIO 6", stmPin: "GPIO_PIN_6(PA6)", voltage: "3.3V" },
-            { id: 8, device: "경고 부저 (Active Buzzer)", interface: "PWM", pinName: "PWM Control", espPin: "GPIO 42 (LEDC)", stmPin: "TIM2_CH1(PA15)", voltage: "5V" },
-            { id: 9, device: "현장 비상 경광등", interface: "Relay/GPIO", pinName: "GPIO Out", espPin: "GPIO 10", stmPin: "GPIO_PIN_10(PB10)", voltage: "5V/12V" }
+            { id: 1, device: "60GHz mmWave 레이더 (MR60BHA1)", interface: "UART", pinName: "TXD / RXD", espPin: "직결 (키트 내장)", stmPin: "Wi-Fi (MQTT 전송)", voltage: "5V" },
+            { id: 2, device: "조도 센서 (BH1750)", interface: "I2C", pinName: "SDA / SCL", espPin: "직결 (키트 내장)", stmPin: "Wi-Fi (MQTT 전송)", voltage: "3.3V" },
+            { id: 3, device: "WS2812 RGB LED", interface: "One-Wire", pinName: "DIN", espPin: "직결 (키트 내장)", stmPin: "Wi-Fi (MQTT 전송)", voltage: "5V" },
+            { id: 4, device: "CO₂ 가스 센서 (SCD40)", interface: "I2C", pinName: "SDA / SCL", espPin: "미연결", stmPin: "GPIO 2 (SDA) / GPIO 3 (SCL)", voltage: "3.3V" },
+            { id: 5, device: "열화상 센서 (MLX90640)", interface: "I2C", pinName: "SDA / SCL", espPin: "미연결", stmPin: "GPIO 2 (SDA) / GPIO 3 (SCL) [Bus Share]", voltage: "3.3V" },
+            { id: 6, device: "재실 PIR 센서 (HC-SR501)", interface: "GPIO", pinName: "OUT", espPin: "미연결", stmPin: "GPIO 17", voltage: "3.3V" },
+            { id: 7, device: "경고 부저 (Active Buzzer)", interface: "GPIO", pinName: "PWM/Control", espPin: "미연결", stmPin: "GPIO 18 (PWM)", voltage: "5V" }
         ];
 
         const INITIAL_DEPENDENCIES = [
-            { id: 1, name: "60GHz mmWave 모듈 배송 완료", dur: "7일 소요", target: "mmWave 드라이버 펌웨어 파싱 코드 설계", status: "진행중", barColor: "bg-embed-amber", progress: 60 },
-            { id: 2, name: "MLX90640 열화상 I2C 공유 회로 PCB 발주", dur: "10일 소요", target: "열화상 보드 조립 및 I2C 충돌 분석 테스트", status: "대기", barColor: "bg-embed-purple", progress: 0 },
-            { id: 3, name: "ESP32-S3 FreeRTOS 프레임워크 셋업", dur: "5일 소요", target: "하드웨어 드라이버 통합 및 다단계 경보 태스크 연동", status: "완료", barColor: "bg-embed-green", progress: 100 }
+            { id: 1, name: "Seeed MR60BHA1 C6 개발 키트 입고 완료", dur: "7일 소요", target: "XIAO ESP32C6 기반 Wi-Fi/MQTT 드라이버 포팅", status: "진행중", barColor: "bg-embed-amber", progress: 60 },
+            { id: 2, name: "라즈베리파이 5 NDIR 센서 다중 공유 버스 결선", dur: "10일 소요", target: "I2C 슬레이브 쿼리 분석 및 풀업 저항 연동", status: "대기", barColor: "bg-embed-purple", progress: 0 },
+            { id: 3, name: "XIAO ESP32C6 Wi-Fi/MQTT 전송 펌웨어 셋업", dur: "5일 소요", target: "레이더 데이터 파싱 및 가벼운 MQTT 클라이언트 발행 연동", status: "완료", barColor: "bg-embed-green", progress: 100 }
         ];
 
         const INITIAL_FAILSAFES = [
-            { condition: "mmWave 레이더 RX 타임아웃 3초 초과 (UART 수신 두절)", action: "열화상 센서(MLX90640)의 absolute 온도 점프 검출 알고리즘을 위험도 공식 R 산출의 최대 인자(+45점)로 승격하여 엣지 백업 생명 추적 기동" },
-            { condition: "NDIR CO₂ 가스 수치 비정상 초과 (2,500ppm+ 10초 유지)", action: "내부 작업자 재실 판정 여부와 강제 무관하게 ESP32-S3 GPIO 10을 HIGH로 토글하여 12V 외부 강력 환기 팬 릴레이를 로컬에서 자동 기동하고, 대시보드 경보 기입" },
-            { condition: "관제 게이트웨이 Wi-Fi 무선 신호 차단 (MQTT Keep-Alive 단절)", action: "내부 메인 노드가 로컬 BLE 안테나를 즉시 송출 상태로 튜닝하여, 현장 작업자의 BLE 웨어러블 태그와 1:1 다이렉트 긴급 비상 촉각 진동 및 비상 알람 루틴 독립 가동" }
+            { condition: "mmWave 레이더 무선 데이터 단절 5초 초과 (MQTT 통신 두절)", action: "열화상 센서(MLX90640)의 absolute 온도 점프 검출 알고리즘을 위험도 공식 R 산출의 최대 인자(+45점)로 승격하여 엣지 백업 생명 추적 기동" },
+            { condition: "NDIR CO₂ 가스 수치 비정상 초과 (2,500ppm+ 10초 유지)", action: "내부 작업자 재실 판정 여부와 관계없이 라즈베리파이 5의 GPIO 출력을 이용해 외부 강력 환기 팬 릴레이를 로컬에서 즉시 기동하고 대시보드 경보 격발" },
+            { condition: "관제 게이트웨이 Wi-Fi 무선 신호 차단 (MQTT Keep-Alive 단절)", action: "네트워크 단절 시 XIAO ESP32C6 노드의 WS2812 RGB LED를 비상 적색 스트로브 모드로 로컬 전환하고, 부저를 직접 구동하여 현장 단독 알림 루틴 독립 기동" }
         ];
 
         const INITIAL_KPTS = [
