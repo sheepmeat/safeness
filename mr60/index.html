@@ -1,0 +1,2991 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MR60BHA2 mmWave 센서 마스터 허브</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Live Waves -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* 밝은 디자인 (Light Mode) 변수 재선언 */
+            --bg-dark: #f4f6fa;
+            --bg-card: rgba(255, 255, 255, 0.75);
+            --bg-card-hover: rgba(255, 255, 255, 0.95);
+            --border-color: rgba(15, 23, 42, 0.08);
+            --border-color-glow: rgba(14, 165, 233, 0.4);
+            
+            --primary: #0284c7; /* Sky 600 */
+            --primary-rgb: 2, 132, 199;
+            --primary-grad: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            
+            --secondary: #db2777; /* Pink 600 */
+            --secondary-rgb: 219, 39, 119;
+            --secondary-grad: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            
+            --success: #059669; /* Emerald 600 */
+            --success-rgb: 5, 150, 105;
+            --success-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            
+            --warning: #ea580c; /* Orange 600 */
+            --warning-grad: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            
+            --purple: #7c3aed; /* Violet 600 */
+            --purple-grad: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            
+            --text-main: #0f172a; /* Slate 900 */
+            --text-muted: #475569; /* Slate 600 */
+            --text-link: #0284c7;
+            
+            --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            --shadow-neon: 0 10px 30px -10px rgba(2, 132, 199, 0.15), 0 1px 3px rgba(0, 0, 0, 0.02);
+            --shadow-neon-strong: 0 15px 35px -10px rgba(2, 132, 199, 0.35);
+            --shadow-heart: 0 10px 30px -10px rgba(219, 39, 119, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-outfit);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 45%),
+                linear-gradient(to bottom, #f4f6fa, #e2e8f0);
+            background-attachment: fixed;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(2, 132, 199, 0.2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(2, 132, 199, 0.4);
+        }
+
+        /* Container Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation - 밝게 변경 */
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.85);
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 3rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            background: var(--primary-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 4px 6px rgba(2, 132, 199, 0.2));
+            animation: pulse 2s infinite alternate;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 1.35rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #0f172a, #475569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--primary);
+            -webkit-text-fill-color: var(--primary);
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .nav-item {
+            width: 100%;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 1rem 1.25rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link i {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+            transition: transform 0.25s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-main);
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-link:hover i {
+            transform: translateX(3px);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            background: rgba(2, 132, 199, 0.08);
+            border-color: rgba(2, 132, 199, 0.2);
+            box-shadow: inset 0 0 12px rgba(2, 132, 199, 0.03);
+        }
+
+        .nav-link.active i {
+            color: var(--primary);
+            text-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Main Content Panel */
+        .main-content {
+            margin-left: 300px;
+            flex-grow: 1;
+            padding: 3rem 4rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Tab Content Control */
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Section Typography */
+        .section-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .badge-category {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(2, 132, 199, 0.08);
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(2, 132, 199, 0.15);
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #0f172a 30%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            max-width: 800px;
+        }
+
+        /* Cards and Layout Components - 밝고 투명한 유리느낌 */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(2, 132, 199, 0.25);
+            box-shadow: var(--shadow-neon);
+            background: var(--bg-card-hover);
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card.accent-blue::before { background: var(--primary-grad); }
+        .glass-card.accent-pink::before { background: var(--secondary-grad); }
+        .glass-card.accent-green::before { background: var(--success-grad); }
+        .glass-card.accent-purple::before { background: var(--purple-grad); }
+        .glass-card.accent-orange::before { background: var(--warning-grad); }
+
+        .card-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-title i {
+            font-size: 1.25rem;
+            background: var(--primary-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom UI Components */
+        .spec-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .spec-name {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .spec-val {
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Checklist styling */
+        .checklist {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .check-item {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: transparent;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-top: 2px;
+            background: #ffffff;
+        }
+
+        .check-box.checked {
+            background: var(--primary-grad);
+            border-color: transparent;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+        }
+
+        .check-text h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .check-text p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        .check-box.checked + .check-text h4 {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        /* Interactive Wiring Component */
+        .mcu-select-wrapper {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-mcu {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-family: var(--font-outfit);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .btn-mcu:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-main);
+        }
+
+        .btn-mcu.active {
+            background: var(--primary-grad);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .wiring-diagram-container {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 380px;
+            position: relative;
+        }
+
+        .pinout-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .pinout-table th, .pinout-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .pinout-table th {
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .pinout-table tr:hover td {
+            background: rgba(0, 0, 0, 0.01);
+        }
+
+        .pin-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .pin-tag.vcc { background: rgba(241, 39, 17, 0.1); color: #dc2626; border: 1px solid rgba(241, 39, 17, 0.15); }
+        .pin-tag.gnd { background: rgba(71, 85, 105, 0.1); color: #475569; border: 1px solid rgba(71, 85, 105, 0.15); }
+        .pin-tag.tx { background: rgba(2, 132, 199, 0.1); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.15); }
+        .pin-tag.rx { background: rgba(124, 58, 237, 0.1); color: #7c3aed; border: 1px solid rgba(124, 58, 237, 0.15); }
+
+        /* Protocol Simulator Components */
+        .simulator-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-family: var(--font-outfit);
+            font-size: 1rem;
+            transition: all 0.25s ease;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.2), inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2rem;
+            padding-right: 2.5rem;
+        }
+
+        .btn-action {
+            background: var(--primary-grad);
+            color: #ffffff;
+            border: none;
+            padding: 0.85rem 1.75rem;
+            border-radius: 12px;
+            font-family: var(--font-outfit);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(2, 132, 199, 0.35);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.85rem 1.75rem;
+            border-radius: 12px;
+            font-family: var(--font-outfit);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .btn-outline:hover {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: rgba(0, 0, 0, 0.15);
+        }
+
+        /* Byte blocks visualizer */
+        .byte-visualizer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 1.5rem 0;
+            background: #ffffff;
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            font-family: var(--font-mono);
+        }
+
+        .byte-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            padding: 6px 10px;
+            min-width: 60px;
+        }
+
+        .byte-block .hex {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .byte-block .lbl {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Color classes for bytes in Light Mode */
+        .byte-block.header { border-color: rgba(71, 85, 105, 0.3); background: rgba(71, 85, 105, 0.05); }
+        .byte-block.control { border-color: var(--purple); background: rgba(124, 58, 237, 0.06); }
+        .byte-block.command { border-color: var(--primary); background: rgba(14, 165, 233, 0.06); }
+        .byte-block.length { border-color: #64748b; background: rgba(100, 116, 139, 0.05); }
+        .byte-block.data { border-color: var(--secondary); background: rgba(236, 72, 153, 0.06); }
+        .byte-block.checksum { border-color: var(--warning); background: rgba(249, 115, 22, 0.06); }
+        .byte-block.footer { border-color: rgba(71, 85, 105, 0.3); background: rgba(71, 85, 105, 0.05); }
+
+        /* 모니터용 터미널 및 소스 코드 구역은 가시성을 위해 어두운 톤을 유지하되 슬레이트 블루로 매치 */
+        .terminal-panel {
+            background: #0f172a;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 1.25rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: #38f9d7;
+            height: 280px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .terminal-line {
+            margin-bottom: 6px;
+            line-height: 1.4;
+            display: flex;
+            gap: 10px;
+        }
+
+        .terminal-line .time {
+            color: rgba(56, 249, 215, 0.6);
+            flex-shrink: 0;
+        }
+
+        .terminal-line .dir {
+            color: #38bdf8;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .terminal-line .msg {
+            color: #ffffff;
+            word-break: break-all;
+        }
+
+        .terminal-line.info .msg { color: #94a3b8; }
+        .terminal-line.error .msg { color: #f87171; }
+
+        .console-controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Realtime dynamic graph styling */
+        .chart-wrapper {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            height: 320px;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .vital-value-display {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1.5rem;
+        }
+
+        .vital-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            text-align: center;
+            min-width: 140px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .vital-card.heart {
+            border-color: rgba(219, 39, 119, 0.2);
+        }
+        .vital-card.breath {
+            border-color: rgba(2, 132, 199, 0.2);
+        }
+        .vital-card.presence {
+            border-color: rgba(5, 150, 105, 0.2);
+        }
+
+        .vital-card .lbl {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .vital-card .val {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .vital-card .unit {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-left: 2px;
+        }
+
+        .vital-card.heart .val { color: var(--secondary); text-shadow: 0 2px 4px rgba(219, 39, 119, 0.1); }
+        .vital-card.breath .val { color: var(--primary); text-shadow: 0 2px 4px rgba(2, 132, 199, 0.1); }
+        .vital-card.presence .val { color: var(--success); text-shadow: 0 2px 4px rgba(5, 150, 105, 0.1); }
+
+        /* Code Block Component */
+        .code-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom: none;
+        }
+
+        .code-title {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-copy:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #38bdf8;
+        }
+
+        .code-area {
+            background: #0f172a;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin-bottom: 2rem;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            color: #e2e8f0;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        /* Code syntax colors */
+        .code-comment { color: #64748b; }
+        .code-keyword { color: #f43f5e; }
+        .code-type { color: #38bdf8; }
+        .code-string { color: #eab308; }
+        .code-number { color: #c084fc; }
+        .code-func { color: #4ade80; }
+
+        /* Configurator toggles for code gen */
+        .config-panel {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Troubleshooting Alerts */
+        .alert-box {
+            display: flex;
+            gap: 15px;
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid transparent;
+        }
+
+        .alert-box.danger {
+            background: #fef2f2;
+            border-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert-box.info {
+            background: #f0f9ff;
+            border-color: #e0f2fe;
+            color: #075985;
+        }
+
+        .alert-box.warning {
+            background: #fff7ed;
+            border-color: #ffedd5;
+            color: #9a3412;
+        }
+
+        .alert-box i {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        .alert-content h5 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .alert-content p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .alert-box.danger .alert-content h5 { color: #b91c1c; }
+        .alert-box.info .alert-content h5 { color: #0369a1; }
+        .alert-box.warning .alert-content h5 { color: #c2410c; }
+
+        /* Animation */
+        @keyframes pulse {
+            0% { filter: drop-shadow(0 2px 4px rgba(2, 132, 199, 0.2)); }
+            100% { filter: drop-shadow(0 8px 16px rgba(2, 132, 199, 0.5)); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SVG Wire Graphic styling */
+        .svg-wiring {
+            width: 100%;
+            max-width: 450px;
+            height: auto;
+        }
+        
+        .wire-vcc { stroke: #dc2626; stroke-width: 3; fill: none; stroke-linecap: round; }
+        .wire-gnd { stroke: #475569; stroke-width: 3; fill: none; stroke-linecap: round; }
+        .wire-tx { stroke: #0284c7; stroke-width: 3; fill: none; stroke-linecap: round; }
+        .wire-rx { stroke: #7c3aed; stroke-width: 3; fill: none; stroke-linecap: round; }
+        
+        .connection-node {
+            fill: #ffffff;
+            stroke-width: 2;
+        }
+        .connection-node.vcc { stroke: #dc2626; }
+        .connection-node.gnd { stroke: #475569; }
+        .connection-node.tx { stroke: #0284c7; }
+        .connection-node.rx { stroke: #7c3aed; }
+
+        .device-box {
+            fill: #ffffff;
+            stroke: rgba(15, 23, 42, 0.15);
+            stroke-width: 2;
+            rx: 10px;
+        }
+
+        .device-label {
+            fill: #0f172a;
+            font-size: 13px;
+            font-weight: bold;
+            font-family: var(--font-outfit);
+        }
+
+        .pin-label {
+            fill: var(--text-muted);
+            font-size: 11px;
+            font-family: var(--font-mono);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1.5rem;
+            }
+            .logo-area {
+                margin-bottom: 1.5rem;
+            }
+            .nav-menu {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .nav-link {
+                padding: 0.75rem 1rem;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 2rem;
+            }
+            .simulator-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-2col, .grid-3col {
+                grid-template-columns: 1fr;
+            }
+            .vital-value-display {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: center;
+            }
+            .vital-card {
+                width: 100%;
+                max-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-radar logo-icon"></i>
+                <div class="logo-text">
+                    MR60BHA2
+                    <span>mmWave Master Hub</span>
+                </div>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a class="nav-link active" onclick="switchTab('intro')">
+                            <i class="fa-solid fa-circle-info"></i> 시작하기 (Getting Started)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchTab('wiring')">
+                            <i class="fa-solid fa-diagram-project"></i> 회로 연결 (Wiring Guide)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchTab('simulator')">
+                            <i class="fa-solid fa-terminal"></i> 프로토콜 시뮬레이터
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchTab('codegen')">
+                            <i class="fa-solid fa-code"></i> 코드 생성기 (Code Generator)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchTab('theory')">
+                            <i class="fa-solid fa-graduation-cap"></i> 레이더 핵심 이론 (Deep Theory)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchTab('trouble')">
+                            <i class="fa-solid fa-triangle-exclamation"></i> 설치 & 문제해결
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <p>Designed for MR60BHA2</p>
+                <p style="margin-top: 4px; font-size: 0.75rem; opacity: 0.6;">v1.3 (Bright Edition)</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Panel -->
+        <main class="main-content">
+            
+            <!-- TAB 1: INTRODUCTION -->
+            <section id="tab-intro" class="tab-panel active">
+                <div class="section-header">
+                    <span class="badge-category">Overview</span>
+                    <h1 class="section-title">MR60BHA2 mmWave 센서 마스터 클래스</h1>
+                    <p class="section-desc">기본 번들 제공되는 <strong>XIAO ESP32C6</strong>와 호흡/심박 레이더 모듈을 마스터하기 위한 하드웨어 연동 허브입니다.</p>
+                </div>
+
+                <div class="glass-card accent-blue" style="margin-bottom: 2rem;">
+                    <h3 class="card-title" style="color: var(--primary);"><i class="fa-solid fa-box-open"></i> 공식 번들 MCU: Seeed Studio XIAO ESP32C6</h3>
+                    <p style="color: var(--text-muted); line-height: 1.7; margin-bottom: 1rem;">
+                        이 센서 키트는 초소형 폼팩터에 차세대 <strong>Wi-Fi 6, Bluetooth 5, Zigbee / Thread (802.15.4)</strong> 무선 스택을 모두 통합한 <strong>XIAO ESP32C6</strong> 개발 보드가 결합되어 출시됩니다.
+                    </p>
+                    <div class="grid-3col" style="gap: 1.5rem; margin-top: 1rem; margin-bottom: 0.5rem;">
+                        <div style="background: rgba(0,0,0,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.04);">
+                            <strong style="color: var(--primary); font-size: 0.95rem; display: block; margin-bottom: 4px;"><i class="fa-solid fa-microchip"></i> RISC-V 싱글 코어</strong>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">160MHz 클럭의 효율적인 RISC-V 아키텍처로 레이더 데이터 파싱 및 무선 IoT 전송을 동시 수행합니다.</p>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.04);">
+                            <strong style="color: var(--primary); font-size: 0.95rem; display: block; margin-bottom: 4px;"><i class="fa-solid fa-tower-broadcast"></i> 스마트홈 최적 프로토콜</strong>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">Zigbee 및 Thread 연동을 지원하여 가구 밀착형 인체 감지 센서 네트워크 구축에 가장 앞서 있습니다.</p>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.04);">
+                            <strong style="color: var(--primary); font-size: 0.95rem; display: block; margin-bottom: 4px;"><i class="fa-solid fa-plug"></i> Grove 에코시스템</strong>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">키트 메인보드 상의 Grove 커넥터를 통해 별도의 복잡한 납땜 없이 바로 UART 시리얼 데이터 전송을 시작합니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="glass-card accent-purple">
+                        <h3 class="card-title"><i class="fa-solid fa-gauge-high"></i> 센서 주요 특징</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                            MR60BHA2는 60GHz FMCW(주파수 변조 연속파) 레이더 기술을 활용하여 인체 접촉 없이 미세한 흉부 움직임을 감지하고, 이를 분석하여 호흡 및 심박 수치를 출력하는 고정밀 센서 모듈입니다.
+                        </p>
+                        <ul class="spec-list">
+                            <li class="spec-item">
+                                <span class="spec-name">주파수 대역</span>
+                                <span class="spec-val">58GHz - 62GHz (60GHz 대역)</span>
+                            </li>
+                            <li class="spec-item">
+                                <span class="spec-name">호흡 감지 범위</span>
+                                <span class="spec-val">0.4m ~ 1.5m (최적의 정밀 구역)</span>
+                            </li>
+                            <li class="spec-item">
+                                <span class="spec-name">움직임 감지 범위</span>
+                                <span class="spec-val">최대 6.0m (존재 감지)</span>
+                            </li>
+                            <li class="spec-item">
+                                <span class="spec-name">통신 인터페이스</span>
+                                <span class="spec-val">UART (TTL 3.3V, 115200 bps)</span>
+                            </li>
+                            <li class="spec-item">
+                                <span class="spec-name">공급 전원</span>
+                                <span class="spec-val">4.6V ~ 6.0V (정격 5.0V / 1A 이상 권장)</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card accent-orange">
+                        <h3 class="card-title"><i class="fa-solid fa-clipboard-check"></i> 센서 도착 후 준비 단계</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                            센서를 개봉하고 본격적인 개발에 들어가기 전에 다음 단계를 확인하세요.
+                        </p>
+                        <ul class="checklist">
+                            <li class="check-item">
+                                <div class="check-box" onclick="toggleCheck(this)"><i class="fa-solid fa-check"></i></div>
+                                <div class="check-text">
+                                    <h4>안정적인 5V 외부 전원 공급 장치 확보</h4>
+                                    <p>레이더 센서는 무선 신호 송출 시 최대 200mA 이상의 피크 전류를 소비하므로, MCU의 5V 핀 전원 대신 별도의 전용 어댑터를 사용하는 것이 동작 오류를 막습니다.</p>
+                                </div>
+                            </li>
+                            <li class="check-item">
+                                <div class="check-box" onclick="toggleCheck(this)"><i class="fa-solid fa-check"></i></div>
+                                <div class="check-text">
+                                    <h4>USB to UART 컨버터 (FTDI 등) 준비</h4>
+                                    <p>아두이노 소스 코드를 올리기 전, PC와 센서를 직접 연결하여 Seeed의 공식 mmWave 디버깅 소프트웨어를 통해 센서가 정상 동작하는지 테스트해보는 것이 좋습니다.</p>
+                                </div>
+                            </li>
+                            <li class="check-item">
+                                <div class="check-box" onclick="toggleCheck(this)"><i class="fa-solid fa-check"></i></div>
+                                <div class="check-text">
+                                    <h4>센서 배치용 고정 구조물 브래킷 또는 삼각대</h4>
+                                    <p>미세한 호흡/심박수를 측정하기 때문에 센서 껍데기가 흔들리면 측정에 큰 오차가 발생합니다. 단단하게 고정할 스탠드나 브래킷이 필수적입니다.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 신규 추가: 센서 실무 연동 및 기획 핵심 가이드 -->
+                <div class="glass-card accent-info" style="margin-top: 2rem;">
+                    <h3 class="card-title" style="color: var(--info);"><i class="fa-solid fa-graduation-cap"></i> MR60BHA2 센서 작동 메커니즘 및 실무 연동 절차</h3>
+                    <p style="color: var(--text-muted); line-height: 1.7; margin-bottom: 1.5rem;">
+                        이 섹션은 하드웨어 엔지니어 및 소프트웨어 개발자가 MR60BHA2 센서를 실제 상용 제품이나 스마트홈 시스템에 이식할 때 반드시 숙지해야 하는 **동작 상태 상태도(State Machine)**와 **표준 개발 절차**, 그리고 **실무 기하학적 제약 조건**을 이론적으로 다룹니다.
+                    </p>
+
+                    <div class="grid-2col" style="gap: 2rem; margin-bottom: 2rem;">
+                        <div>
+                            <h4 style="font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin-bottom: 0.75rem;"><i class="fa-solid fa-diagram-next"></i> A. 센서 내부의 동작 상태 머신 (State Machine)</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+                                센서는 전원이 켜진 후, 수신 전파의 실시간 변화 정도에 따라 내부 알고리즘이 4가지 상태를 자동 천이하며 동작합니다. 각 상태의 트리거 요건과 동작 특성을 파악해야 오동작 없는 소프트웨어 기획이 가능합니다.
+                            </p>
+                            <ul style="font-size: 0.85rem; color: var(--text-muted); display:flex; flex-direction:column; gap:8px; padding-left:1.25rem; list-style:circle;">
+                                <li>
+                                    <strong style="color: var(--text-main);">비재실 (Vacant / No one):</strong> 
+                                    감지 영역 내에 어떠한 전파 반사 변화(움직임 및 위상 변화)도 없을 때의 대기 상태입니다. 센서는 이 상태에서 배경 잡음(Background Noise)을 지속 샘플링하여 클러터 맵을 갱신합니다.
+                                </li>
+                                <li>
+                                    <strong style="color: var(--text-main);">동적 존재 (Active / Movement):</strong> 
+                                    영역 내로 인체가 진입하거나 큰 몸짓(걷기, 손 흔들기 등)이 감지되는 순간 즉각 진입합니다. 이 상태에서는 생체 신호(호흡/심박) 값의 신뢰도가 낮아지며, 재실 판정 플래그가 우선 활성화됩니다.
+                                </li>
+                                <li>
+                                    <strong style="color: var(--text-main);">정적 존재 (Static / Breathing):</strong> 
+                                    대상이 자리에 가만히 앉거나 누워 미세한 움직임만 취할 때 천이됩니다. 내부 DSP 파이프라인이 가동되어 흉부의 미세 위상차 분석(호흡수 및 심박수)을 정밀 추출하는 주동작 상태입니다.
+                                </li>
+                                <li>
+                                    <strong style="color: var(--text-main);">수면 분석 (Sleep State):</strong> 
+                                    정적 존재 상태가 장시간 유지되며 호흡의 주기성과 미세 움직임의 빈도가 낮아지면 진입합니다. 센서는 수면 깊이(깊은 수면, 얕은 수면, 무호흡 상태)를 패턴 인식하여 별도의 수면 통계 패킷을 내보냅니다.
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 style="font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin-bottom: 0.75rem;"><i class="fa-solid fa-gears"></i> B. 센서 연동 표준 개발 절차 (Standard Procedure)</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+                                MCU(XIAO ESP32C6 등) 소스코드 작성 시 아래의 단계적 절차를 순서대로 구현해 주어야 센서의 성능을 최대로 발휘할 수 있습니다.
+                            </p>
+                            <ol style="font-size: 0.85rem; color: var(--text-muted); display:flex; flex-direction:column; gap:8px; padding-left:1.25rem;">
+                                <li>
+                                    <strong style="color: var(--text-main);">1. 초기 파워온 안정화 대기 (Initialization Delay):</strong><br>
+                                    센서 내부 알고리즘이 부팅 후 주변 환경의 정적 클러터를 분석하고 자가 진단(Self-Test)을 마치는 데 약 **5~10초**의 시간이 필요합니다. 이 시간 동안 들어오는 시리얼 데이터는 무시하거나 보정 시간으로 힙에 쌓아둡니다.
+                                </li>
+                                <li>
+                                    <strong style="color: var(--text-main);">2. 감도 및 매개변수 설정 (Configuration Write):</strong><br>
+                                    설치된 환경의 방 크기나 노이즈 유무에 따라, MCU가 센서로 **감도 제어 커맨드(Sensitivity Level)**나 **감지 범위 경계(Range Gates)** 설정 패킷을 송신하여 하드웨어를 튜닝합니다.
+                                </li>
+                                <li>
+                                    <strong style="color: var(--text-main);">3. 링버퍼(Ring Buffer) 기반 수신 및 헤더 싱크 동기화:</strong><br>
+                                    센서는 끊임없이 바이트 스트림을 송출합니다. MCU는 시리얼 수신 인터럽트에서 데이터를 링버퍼에 저장하고, 순차적으로 `0x53 0x59` 헤더를 찾아내 프레임의 시작점을 실시간으로 동기화해야 합니다.
+                                </li>
+                                <li>
+                                    <strong style="color: var(--text-main);">4. 체크섬 검증 및 데이터 언패킹 (Checksum &amp; Parsing):</strong><br>
+                                    수신된 프레임의 전체 바이트 합을 계산하여 체크섬 바이트와 일치하는지 무결성을 검증합니다. 일치할 경우에만 제어 단어(Control Word)와 명령 단어(Command Word)를 매칭하여 실제 데이터 영역(Data Payload)의 생체 신호 수치를 변수에 대입합니다.
+                                </li>
+                                <li>
+                                    <strong style="color: var(--text-main);">5. 예외 및 아웃라이어 필터링 (Software Filtering):</strong><br>
+                                    대상이 수면 중 자세를 뒤척이거나 감지 범위를 일시적으로 이탈할 때, 센서에서 호흡수나 심박수가 순간적으로 `0`으로 드롭되는 아웃라이어가 발생할 수 있습니다. MCU 펌웨어 단에서 **이동 평균 필터(Moving Average)**나 **직전 유효값 유지(Hold Filter)** 알고리즘을 추가하여 연동 데이터의 품질을 안정화하십시오.
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 1.5rem;">
+                        <h4 style="font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin-bottom: 1rem;"><i class="fa-solid fa-ruler-combined"></i> C. 실무 설치 기하학 및 물리적 제약 이론</h4>
+                        <div class="grid-3col" style="gap: 1.5rem;">
+                            <div style="background: rgba(0,0,0,0.015); padding: 1rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.03);">
+                                <strong style="color: var(--primary); font-size: 0.95rem; display: block; margin-bottom: 6px;"><i class="fa-solid fa-up-down"></i> 설치 높이와 각도 조건</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                    * **벽면 장착 (Wall Mount):** 바닥에서 1.2m ~ 1.5m 높이에 설치하고, 센서 전면이 사람의 가슴을 향해 대각선 하향(45도 내외)으로 조준되도록 조절합니다.<br>
+                                    * **천장 장착 (Ceiling Mount):** 침대 머리맡 바로 위 천장(높이 2.5m 내외)에 수직 방향으로 설치하여 흉부의 팽창 운동을 직각 방향에서 최대로 샘플링할 수 있도록 포지셔닝합니다.
+                                </p>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.015); padding: 1rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.03);">
+                                <strong style="color: var(--purple-grad); font-size: 0.95rem; display: block; margin-bottom: 6px;"><i class="fa-solid fa-ban"></i> 전파 간섭 회피 조건</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                    * **기계적 진동 배제:** 레이더는 미세 진동을 인체 생체 신호로 오인하므로 에어컨, 선풍기 날개, 흔들리는 화초, 물이 흐르는 금속 배관 등 주기적인 미세 변위가 발생하는 대상이 레이더 안테나 빔 각도(FOV) 정면에 위치해서는 안 됩니다.<br>
+                                    * **투과 및 난반사:** 60GHz 전파는 목재, 유리, 석고보드를 일부 투과하므로 벽 너머에 있는 사람의 움직임이 노이즈로 잡힐 수 있습니다. 감도 레지스터를 활용해 거리를 차단하십시오.
+                                </p>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.015); padding: 1rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.03);">
+                                <strong style="color: var(--success); font-size: 0.95rem; display: block; margin-bottom: 6px;"><i class="fa-solid fa-lightbulb"></i> 실무 활용 시나리오 예시</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                    * **독거노인 위급 감지 (Sleep Apnea):** 수면 중 호흡수가 0인 상태(무호흡)가 15초 이상 유지되고, 움직임 강도가 없을 때 MCU가 Wi-Fi 6망을 통해 보호자나 관제 센터로 비상 긴급 패킷을 전송하는 경보 시스템 기획이 가능합니다.<br>
+                                    * **진정한 정적 재실 조명 제어:** 기존 적외선(PIR) 센서와 달리 가만히 앉아서 독서나 컴퓨터 업무를 하는 정적 상태에서도 재실을 100% 감지하므로, 화장실이나 서재에서 사람이 가만히 있을 때 전등이 갑자기 꺼지는 고질적인 UX 결함을 해결할 수 있습니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin-bottom: 1rem;"><i class="fa-solid fa-microchip"></i> D. MCU 물리 결선 및 펌웨어 업로드 가이드</h4>
+                        <div class="grid-2col" style="gap: 2rem;">
+                            <div>
+                                <strong style="color: var(--primary); font-size: 0.95rem; display: block; margin-bottom: 6px;"><i class="fa-solid fa-bolt"></i> 1. 공통 그라운드(Common Ground) 및 외부 전원</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+                                    레이더 센서를 구동할 때, 노이즈와 리셋 루프를 방지하기 위해 5V 외부 전용 어댑터를 사용하는 것이 권장됩니다.
+                                </p>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                    이때, **외부 전원의 그라운드(GND)와 ESP32/XIAO 보드의 그라운드(GND)는 반드시 하나로 묶여야(Common Ground)** 합니다. 그라운드를 공통으로 연결하지 않으면 두 기기 간의 통신 기준 전위가 달라져 UART 데이터가 전부 깨지게 됩니다.
+                                </p>
+                            </div>
+                            <div>
+                                <strong style="color: var(--purple-grad); font-size: 0.95rem; display: block; margin-bottom: 6px;"><i class="fa-solid fa-upload"></i> 2. 업로드 시 핀 충돌 회피 (중요 트러블슈팅)</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+                                    * **기본 포트 충돌:** 아두이노 Uno나 일부 ESP32 보드에서 기본 시리얼 핀(RX0, TX0)에 레이더 센서를 상시 연결해두면, USB를 통한 **PC의 코드 업로드 신호와 센서의 송출 전파 신호가 충돌**하여 업로드 에러가 납니다.
+                                </p>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                    * **대책:** 코드 업로드 중에는 센서의 RX/TX 선을 일시적으로 뽑거나, 본 가이드의 기본값처럼 **XIAO ESP32C6의 Hardware Serial 1(GPIO 20/21) 포트**나 **ESP32 DevKit의 Hardware Serial 2(GPIO 16/17) 포트**로 물리 핀을 분리하여 설계하십시오.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin-bottom: 1rem;"><i class="fa-solid fa-server"></i> E. 라즈베리 파이 5 (8GB) 기반 Edge AI 시스템 아키텍처 및 무선 데이터 전송</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                            MCU(XIAO ESP32C6)가 레이더 센서로부터 디코딩한 생체 데이터를 동일 네트워크 상의 <strong>라즈베리 파이 5 (8GB) 중앙 서버</strong>로 쏘아보내고, 파이 5의 강력한 하드웨어 자원을 활용해 <strong>실시간 Edge AI 추론(수면 무호흡 판정, 낙상 감지 등)</strong>을 구동하는 전체 시스템 아키텍처 가이드입니다.
+                        </p>
+
+                        <!-- 시스템 흐름 아키텍처 시각화 (유니코드 블록) -->
+                        <div style="background: rgba(0,0,0,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(0,0,0,0.04); font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.4; color: var(--text-main); margin-bottom: 1.5rem; text-align: center; overflow-x: auto;">
+                            [MR60BHA2 레이더 센서] &nbsp; --(UART 통신)--> &nbsp; [XIAO ESP32C6 (수집 노드)]<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| (Wi-Fi 송신)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[공유기 (AP Router)]<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>[라즈베리 파이 5 (Edge AI Server)]</strong><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MQTT Broker (데이터 중계)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Python Engine (시계열 모델 추론)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Web Dashboard (실시간 시각화)
+                        </div>
+
+                        <div class="grid-2col" style="gap: 2rem;">
+                            <div style="background: rgba(0,0,0,0.01); padding: 1.25rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.02);">
+                                <strong style="color: var(--primary); font-size: 1rem; display: block; margin-bottom: 8px;"><i class="fa-solid fa-tower-broadcast"></i> 1. MQTT 방식 (실시간 Edge AI에 강력 권장)</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+                                    라즈파이 5에 MQTT Broker를 켜두고, ESP32가 파이의 IP로 JSON을 쏘아 보냅니다. 오버헤드가 적어 수백 ms 단위의 실시간 데이터 파이프라인 구축에 최고입니다.
+                                </p>
+                                <strong style="font-size: 0.85rem; color: var(--text-main); display:block; margin-bottom: 4px;">라즈베리 파이 5 Broker 세팅:</strong>
+                                <pre style="background:#0f172a; color:#f8fafc; padding:0.75rem; border-radius:6px; font-family:var(--font-mono); font-size:0.75rem; margin-bottom: 1rem; overflow-x: auto;">
+# Mosquitto Broker 및 클라이언트 설치
+sudo apt update
+sudo apt install -y mosquitto mosquitto-clients
+sudo systemctl enable mosquitto
+sudo systemctl start mosquitto
+                                </pre>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                    * **연동 원리:** ESP32가 와이파이를 통해 `radar/vital_signs` 토픽으로 JSON 바이너리를 발행하면, 라즈베리 파이 5의 파이썬 프로세스가 이를 실시간으로 구독해 추론에 사용합니다.
+                                </p>
+                            </div>
+
+                            <div style="background: rgba(0,0,0,0.01); padding: 1.25rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.02);">
+                                <strong style="color: var(--success); font-size: 1rem; display: block; margin-bottom: 8px;"><i class="fa-solid fa-brain"></i> 2. 파이 5(8GB) 수신용 파이썬 Edge AI 엔진 코드</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+                                    파이에서 실행되어 ESP32가 보낸 실시간 생체 수치들을 시계열로 누적하고 머신러닝/AI 추론(예: TFLite, ONNX)을 구동하는 데몬 스크립트입니다.
+                                </p>
+                                <strong style="font-size: 0.85rem; color: var(--text-main); display:block; margin-bottom: 4px;">라즈파이 Python AI 엔진 예제 (inference.py):</strong>
+                                <pre style="background:#0f172a; color:#a7f3d0; padding:0.75rem; border-radius:6px; font-family:var(--font-mono); font-size:0.75rem; margin-bottom: 1rem; overflow-x: auto;">
+import json
+import paho.mqtt.client as mqtt
+# import tflite_runtime.interpreter as tflite # AI 모델 라이브러리 예시
+
+# 시계열 추론을 위해 최근 30개의 수치 수집용 버퍼
+vital_history = []
+
+def run_edge_ai_inference(history):
+    # 예시: 30초 분량 데이터가 다 차면 AI 추론 가동
+    # input_data = np.array(history)
+    # prediction = interpreter.predict(input_data)
+    print(f"▶ [AI Engine] 최근 시계열 분석 중... 데이터 버퍼 크기: {len(history)}")
+    
+    # 임계 검출 및 패턴 인식 로직 수행
+    last_breath = history[-1]['breath_rate']
+    if last_breath == 0:
+        print("🚨 [WARNING] 무호흡 의심 상태 감지! 비상 경보 트리거!")
+
+def on_message(client, userdata, msg):
+    payload = json.loads(msg.payload.decode())
+    vital_history.append(payload)
+    if len(vital_history) > 30:
+        vital_history.pop(0)
+    
+    print(f"★ [수신] 심박: {payload['heart_rate']} bpm | 호흡: {payload['breath_rate']} rpm")
+    if len(vital_history) >= 10:
+        run_edge_ai_inference(vital_history)
+
+client = mqtt.Client()
+client.on_message = on_message
+client.connect("localhost", 1883, 60)
+client.subscribe("radar/vital_signs")
+client.loop_forever()
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin-bottom: 1rem;"><i class="fa-solid fa-sliders"></i> F. Seeed Studio 공식 디버깅 소프트웨어 및 수동 튜닝 가이드</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                            MR60BHA2 센서의 감도를 조절하거나 정적 환경(가구, 장애물)의 반사파를 소거하고 감지 경계를 설정하기 위해, Seeed Studio는 공식 **상위 컴퓨터 디버깅 툴 (mmWave Radar Upper Computer Software)**을 제공합니다.
+                        </p>
+
+                        <div class="grid-2col" style="gap: 2rem; margin-bottom: 1.5rem;">
+                            <div>
+                                <strong style="color: var(--primary); font-size: 0.95rem; display: block; margin-bottom: 6px;"><i class="fa-solid fa-plug"></i> 1. PC 및 센서 연결 방식</strong>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+                                    MCU 보드 없이 센서 자체를 직접 PC에 연결하여 환경 설정을 바이트 명령어로 전송하거나 실시간 파형을 확인해야 합니다.
+                                </p>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                    * **준비물:** USB to UART (TTL 3.3V) 컨버터 (예: FTDI, CP2102 칩셋 컨버터)<br>
+                                    * **결선 매핑:** 컨버터 5V &rarr; 센서 VCC, 컨버터 GND &rarr; 센서 GND, 컨버터 RX &rarr; 센서 TXD, 컨버터 TX &rarr; 센서 RXD<br>
+                                    * **연결 설정:** Seeed 위키(Wiki)에서 각 모듈용 'Upper Computer' 실행 파일을 다운로드하고, 포트 번호를 지정한 뒤 통신 속도를 **115200 bps**로 지정하여 오픈합니다.
+                                </p>
+                            </div>
+                            <div>
+                                <strong style="color: var(--purple-grad); font-size: 0.95rem; display: block; margin-bottom: 6px;"><i class="fa-solid fa-gears"></i> 2. 상위 컴퓨터 툴의 핵심 튜닝 기능</strong>
+                                <ul style="font-size: 0.85rem; color: var(--text-muted); display:flex; flex-direction:column; gap:6px; padding-left:1.25rem; list-style:circle;">
+                                    <li>
+                                        <strong style="color: var(--text-main);">자가 캘리브레이션 (Static Suppress / Clutter Calibration):</strong><br>
+                                        빈 방에 센서를 설치한 상태에서 이 명령을 실행하면, 1~2분간 가구, 침대 프레임, 벽면 등 움직이지 않는 구조물의 고정 반사파 세기를 측정하여 내부 메모리에 **정적 노이즈 맵(Clutter Map)**으로 자동 박아둡니다. 이후 인체 감지 시 이 Clutter Map을 빼고 연산하므로 정적 가구로 인한 오동작이 원천 차단됩니다.
+                                    </li>
+                                    <li>
+                                        <strong style="color: var(--text-main);">감지 거리 게이트 범위 조정 (Range Limit Gate):</strong><br>
+                                        센서 전방의 감지 시작 경계(Min Distance)와 차단 경계(Max Distance)를 미터 단위로 세팅합니다. 예컨대 침실 수면 모니터링 시 범위를 딱 `0.4m ~ 1.8m`로 잠가두면, 침대 밖 문을 열고 지나가는 다른 사람이나 가전제품 동작을 완전히 무시할 수 있습니다.
+                                    </li>
+                                    <li>
+                                        <strong style="color: var(--text-main);">민감도 임계값(Sensitivity Threshold) 세팅:</strong><br>
+                                        방안에 바람에 흔들리는 커튼이나 화초가 있는 경우, 존재 감도 단계를 1~10 중 낮추어(예: Level 3) 미세 바람 노이즈를 컷오프(Cut-off)하고 인간만 정밀하게 검출하도록 임계값을 조절합니다.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: WIRING GUIDE -->
+            <section id="tab-wiring" class="tab-panel">
+                <div class="section-header">
+                    <span class="badge-category">Hardware Setup</span>
+                    <h1 class="section-title">하드웨어 연결 가이드</h1>
+                    <p class="section-desc">기본 번들 개발 보드인 <strong>XIAO ESP32C6</strong> 및 기타 MCU의 UART 결선도를 확인하세요.</p>
+                </div>
+
+                <div class="mcu-select-wrapper">
+                    <!-- 기본 세팅을 xiao로 변경 -->
+                    <button class="btn-mcu active" onclick="selectMCU('xiao')"><i class="fa-solid fa-square"></i> XIAO ESP32C6 (Kit 기본 보드)</button>
+                    <button class="btn-mcu" onclick="selectMCU('esp32')"><i class="fa-solid fa-microchip"></i> ESP32 일반 개발 보드</button>
+                    <button class="btn-mcu" onclick="selectMCU('arduino')"><i class="fa-solid fa-infinity"></i> Arduino Uno R3 / R4</button>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="glass-card accent-purple">
+                        <h3 class="card-title"><i class="fa-solid fa-circle-nodes"></i> 실시간 회로 배선도</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                            센서 모듈과 마이크로컨트롤러 간의 UART 크로스 결선입니다. 송신핀(TX)과 수신핀(RX)을 반대로 매칭해야 신호가 교환됩니다.
+                        </p>
+                        
+                        <div class="wiring-diagram-container" id="wiring-svg-container">
+                            <!-- SVGs will be injected here via JS -->
+                        </div>
+                    </div>
+
+                    <div class="glass-card accent-blue">
+                        <h3 class="card-title"><i class="fa-solid fa-table-list"></i> 핀 배선 및 기능 설명</h3>
+                        <table class="pinout-table" id="pinout-table-body">
+                            <!-- Table rows will be updated dynamically via JS -->
+                        </table>
+                        
+                        <div class="alert-box danger" style="margin-top: 1.5rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <div class="alert-content">
+                                <h5>5V 전압 불안정 경고</h5>
+                                <p>전압이 4.6V 이하로 떨어질 경우, mmWave 레이더 모듈은 켜졌다 꺼지는 무한 부팅 루프 상태에 걸릴 수 있습니다. 아두이노 보드의 5V 출력 핀으로 테스트 중 오동작할 경우, 반드시 5V 1A 이상의 안정적인 외부 USB 충전 전력을 센서의 VCC에 직접 공급해 주십시오.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: PROTOCOL SIMULATOR -->
+            <section id="tab-simulator" class="tab-panel">
+                <div class="section-header">
+                    <span class="badge-category">Interactive Tool</span>
+                    <h1 class="section-title">UART 프로토콜 인코더/디코더</h1>
+                    <p class="section-desc">MR60BHA2 센서가 주고받는 HEX 바이너리 패킷을 가상으로 인코딩하고 분석합니다.</p>
+                </div>
+
+                <div class="simulator-layout">
+                    <!-- Simulator Controls -->
+                    <div class="glass-card accent-blue">
+                        <h3 class="card-title"><i class="fa-solid fa-screwdriver-wrench"></i> 가상 패킷 빌더 (Encoder)</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">센서가 계측하여 호스트(MCU)로 발송하는 가상의 상황을 셋팅하고 전송 프레임을 제작해 보세요.</p>
+                        
+                        <div class="grid-2col">
+                            <div class="form-group">
+                                <label class="form-label">데이터 종류 (Control Word)</label>
+                                <select class="form-control form-select" id="enc-control" onchange="updateEncCommands()">
+                                    <option value="0x80">인체 존재 정보 (0x80)</option>
+                                    <option value="0x81">호흡 감지 정보 (0x81)</option>
+                                    <option value="0x85">심박수 정보 (0x85)</option>
+                                    <option value="0x84">수면 패턴 정보 (0x84)</option>
+                                    <option value="0x01">시스템 제어 정보 (0x01)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">세부 명령어 (Command Word)</label>
+                                <select class="form-control form-select" id="enc-command" onchange="updateEncValueOptions()">
+                                    <!-- Options updated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="enc-val-group">
+                            <label class="form-label" id="enc-val-label">입력 값</label>
+                            <div id="enc-val-container">
+                                <!-- Value input fields injected here -->
+                            </div>
+                        </div>
+
+                        <button class="btn-action" onclick="generateHexPacket()"><i class="fa-solid fa-wand-magic-sparkles"></i> HEX 패킷 생성하기</button>
+
+                        <div style="margin-top: 1.5rem;">
+                            <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">생성된 바이너리 프레임 (HEX):</h4>
+                            <div class="byte-visualizer" id="hex-output-container">
+                                <!-- Color-coded bytes -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulator Decoder -->
+                    <div class="glass-card accent-purple">
+                        <h3 class="card-title"><i class="fa-solid fa-magnifying-glass-chart"></i> 패킷 파서 (Decoder)</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">센서로부터 수신한 HEX 원시 패킷을 붙여넣으면 각 바이트 단위로 쪼개어 자동 디코딩 해 드립니다.</p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">바이너리 문자열 붙여넣기 (공백 허용)</label>
+                            <input type="text" class="form-control" id="dec-input" placeholder="예: 53 59 85 02 00 01 4B 84 54 43" value="53 59 85 02 00 01 4B 84 54 43">
+                        </div>
+
+                        <button class="btn-action" style="background: var(--purple-grad);" onclick="decodeHexPacket()"><i class="fa-solid fa-gears"></i> 데이터 디코딩</button>
+
+                        <div style="margin-top: 1.5rem;" id="dec-result-container">
+                            <!-- Decoded results will be shown here -->
+                        </div>
+
+                        <hr style="border:none; border-top:1px solid rgba(0,0,0,0.08); margin: 1.5rem 0;">
+                        <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;"><i class="fa-solid fa-calculator"></i> 임의 바이트 체크섬 계산기</h4>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">보내고자 하는 커스텀 명령어 HEX 바이트를 입력하면 유효한 체크섬 바이트를 즉시 계산합니다.</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="calc-input" placeholder="예: 53 59 02 A4 00 01 0F" value="53 59 02 A4 00 01 0F" oninput="calculateCustomChecksum()">
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.02); padding:0.75rem 1rem; border-radius:8px; border:1px solid rgba(0,0,0,0.04); font-size:0.9rem;">
+                            <span style="color:var(--text-muted); font-weight:600;">계산된 체크섬:</span>
+                            <span style="font-family:var(--font-mono); font-weight:800; color:#db2777;" id="calc-output-checksum">0xEA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live serial stream simulator -->
+                <div class="glass-card accent-green" style="margin-top: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 class="card-title"><i class="fa-solid fa-wave-square"></i> 가상 시리얼 데이터 스트림 &amp; 파형 가시화</h3>
+                            <p style="color: var(--text-muted);">실제 센서가 시리얼 포트를 통해 끊임없이 생체 전송 프레임을 보낼 때, 파서가 실시간으로 데이터를 분리하여 그리는 화면을 가상 시뮬레이션 합니다.</p>
+                        </div>
+                        <div class="console-controls">
+                            <button class="btn-outline" style="border-color: var(--success); color: var(--success);" id="btn-stream" onclick="toggleLiveStream()"><i class="fa-solid fa-play"></i> 스트림 시작</button>
+                            <button class="btn-outline" onclick="clearConsole()"><i class="fa-solid fa-trash-can"></i> 로그 비우기</button>
+                        </div>
+                    </div>
+
+                    <div class="grid-2col" style="grid-template-columns: 0.9fr 1.1fr;">
+                        <div>
+                            <h4 style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; font-family: var(--font-mono);">[UART RX BUFFER - 115200bps]</h4>
+                            <div class="terminal-panel" id="serial-terminal">
+                                <div class="terminal-line info"><span class="time">00:00:00.000</span><span class="msg">시리얼 스트림 시뮬레이터 준비됨. '스트림 시작' 버튼을 누르십시오.</span></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="vital-value-display">
+                                <div class="vital-card heart">
+                                    <div class="lbl"><i class="fa-solid fa-heartbeat"></i> 심박수 (HR)</div>
+                                    <div class="val" id="vital-hr">--</div>
+                                    <span class="unit">bpm</span>
+                                </div>
+                                <div class="vital-card breath">
+                                    <div class="lbl"><i class="fa-solid fa-lungs"></i> 호흡수 (BR)</div>
+                                    <div class="val" id="vital-br">--</div>
+                                    <span class="unit">rpm</span>
+                                </div>
+                                <div class="vital-card presence">
+                                    <div class="lbl"><i class="fa-solid fa-user-check"></i> 존재감지</div>
+                                    <div class="val" id="vital-presence">--</div>
+                                </div>
+                            </div>
+                            
+                            <div class="chart-wrapper">
+                                <canvas id="waveform-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: CODE GENERATOR -->
+            <section id="tab-codegen" class="tab-panel">
+                <div class="section-header">
+                    <span class="badge-category">Firmware Code</span>
+                    <h1 class="section-title">임베디드 소스코드 생성기</h1>
+                    <p class="section-desc">선택한 개발 환경 및 라이브러리에 맞추어 즉시 업로드 가능한 기본 스케치 코드를 자동 완성합니다.</p>
+                </div>
+
+                <div class="config-panel">
+                    <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;"><i class="fa-solid fa-sliders"></i> 옵션 선택</h3>
+                    <div class="grid-3col">
+                        <div class="form-group">
+                            <label class="form-label">보드 및 개발 프레임워크</label>
+                            <select class="form-control form-select" id="code-framework" onchange="generateCode()">
+                                <option value="arduino_lib">Arduino (공식 mmWave 라이브러리 사용)</option>
+                                <option value="arduino_raw">Arduino (라이브러리 없이 직접 UART 파싱)</option>
+                                <option value="esp32_wifi_mqtt">ESP32 / XIAO C6 (Wi-Fi + MQTT to 라즈파이)</option>
+                                <option value="esphome">ESPHome (홈어시스턴트 연동 YAML)</option>
+                                <option value="python">MicroPython (라즈베리 파이 피코 등)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <!-- 기본 핀을 XIAO ESP32C6 RX/TX인 D7(21), D6(20)으로 설정 -->
+                            <label class="form-label">RX 핀 번호 (XIAO C6: GPIO 21)</label>
+                            <input type="number" class="form-control" id="code-rx-pin" value="21" onchange="generateCode()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">TX 핀 번호 (XIAO C6: GPIO 20)</label>
+                            <input type="number" class="form-control" id="code-tx-pin" value="20" onchange="generateCode()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-controls">
+                    <span class="code-title" id="code-filename">sketch.ino</span>
+                    <button class="btn-copy" onclick="copyCode()"><i class="fa-solid fa-copy"></i> 복사하기</button>
+                </div>
+                <pre class="code-area" id="code-output">
+                    <!-- Injected code -->
+                </pre>
+            </section>
+
+            <!-- TAB 5: TROUBLESHOOTING -->
+            <section id="tab-trouble" class="tab-panel">
+                <div class="section-header">
+                    <span class="badge-category">Deployment Guide</span>
+                    <h1 class="section-title">현장 설치 가이드 및 문제해결</h1>
+                    <p class="section-desc">60GHz mmWave 레이더 센서의 뛰어난 감도 특성으로 발생할 수 있는 노이즈 문제와 하드웨어 트러블슈팅 요령입니다.</p>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="glass-card accent-orange">
+                        <h3 class="card-title" style="color: #ea580c;"><i class="fa-solid fa-ruler-combined"></i> 이상적인 센서 설치 요령</h3>
+                        <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                            mmWave 센서는 측정 빔 각도 안에 진동하는 물체가 있을 시 인체로 오인하기 매우 쉽습니다. 최적의 감지 효율을 위해 다음 설치 배치를 준수하세요.
+                        </p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                            <div style="border-left: 3px solid var(--primary); padding-left: 15px;">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 4px;">침대 헤드 부분 위에서 아래로 사선 배치 (추천)</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                    침대에 누워 잠자는 사람의 호흡을 체크하고자 할 때 가장 오차가 적은 배치입니다. 누워 있는 상태에서 레이더 빔이 흉부를 수직으로 잘 관통하도록 침대 머리맡 벽에서 약 45도 기울여 하향 설치합니다.
+                                </p>
+                            </div>
+                            
+                            <div style="border-left: 3px solid var(--primary); padding-left: 15px;">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 4px;">지면으로부터 1.0m ~ 1.5m 높이 고정</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                    센서 높이가 사람의 심장 및 가슴 높이와 비슷하게 위치할수록 측정 정밀도가 극대화됩니다.
+                                </p>
+                            </div>
+
+                            <div style="border-left: 3px solid var(--primary); padding-left: 15px;">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 4px;">강력한 지지대 고정</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                    센서를 옷걸이, 약한 플라스틱 바 등에 얹어두면 센서 자체 진동 및 주변 바람에 센서 프레임이 흔들려 실시간 호흡수가 심하게 왜곡(예: 0회 혹은 비정상적인 폭증)됩니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card accent-pink">
+                        <h3 class="card-title"><i class="fa-solid fa-screwdriver"></i> 대표적인 문제 해결 (Q&amp;A)</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <div>
+                                <h4 style="font-size: 1.05rem; color: #db2777; margin-bottom: 4px;">Q1. 방안에 사람이 없는데 '사람 존재' 및 호흡수가 찍힙니다.</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                    <strong style="color: var(--text-main);">원인:</strong> mmWave 빔 감지 범위 내에 회전하는 선풍기 날개, 펄럭이는 커튼, 에어컨 바람에 흔들리는 실내 식물이 있을 가능성이 90% 이상입니다.<br>
+                                    <strong style="color: var(--text-main);">해결책:</strong> 센서 설치 각도를 미세하게 조정하여 움직이는 기계 및 흔들리는 물체 방향을 회피하거나, 센서 감도(Sensitivity)를 하향 설정(Level 1)하여 불필요한 신호를 컷오프하십시오.
+                                </p>
+                            </div>
+
+                            <div style="border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+                                <h4 style="font-size: 1.05rem; color: #db2777; margin-bottom: 4px;">Q2. 호흡 수치와 심박수가 정기적으로 0으로 뚝뚝 떨어집니다.</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                    <strong style="color: var(--text-main);">원인:</strong> 측정 유효 범위(1.5m 이내)를 벗어났거나, 사람이 너무 격렬하게 움직이고 있는 중일 수 있습니다. 센서는 대상이 가만히 안정 상태일 때(Static) 미세 흉부 팽창을 정확하게 샘플링합니다.<br>
+                                    <strong style="color: var(--text-main);">해결책:</strong> 대상자의 부동 수면 자세를 확보하거나, 센서 거리를 침대로부터 1m 이내로 더 가깝게 전진 설치하십시오.
+                                </p>
+                            </div>
+
+                            <div style="border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+                                <h4 style="font-size: 1.05rem; color: #db2777; margin-bottom: 4px;">Q3. 시리얼 모니터에 깨진 문자가 출력되거나 데이터 수신이 아예 안 됩니다.</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                    <strong style="color: var(--text-main);">원인:</strong> 보드 레이트(Baud Rate) 미스매치 또는 아두이노 보드의 하드웨어 시리얼 핀 크로스 배선 오작동입니다.<br>
+                                    <strong style="color: var(--text-main);">해결책:</strong> 센서의 기본 통신 속도는 115200bps 입니다. 9600bps로 연결되어 있지 않은지 아두이노 코드를 검토하시고, TX핀과 RX핀을 교차 연결(센서 TX -> MCU RX)했는지 반드시 손으로 재확인해 주십시오.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: RADAR THEORY -->
+            <section id="tab-theory" class="tab-panel">
+                <div class="section-header">
+                    <span class="badge-category">Core Engineering Theory</span>
+                    <h1 class="section-title">60GHz FMCW 레이더 핵심 이론 &amp; 신호 처리</h1>
+                    <p class="section-desc">MR60BHA2 센서의 내부 작동 원리인 FMCW 주파수 변조 연속파 기술과 호흡/심박 위상 검출 알고리즘을 깊이 있게 학습합니다.</p>
+                </div>
+
+                <div class="grid-2col" style="margin-bottom: 2rem;">
+                    <!-- FMCW Principle -->
+                    <div class="glass-card accent-blue">
+                        <h3 class="card-title"><i class="fa-solid fa-wave-square"></i> 1. FMCW 레이더 및 거리 계측 원리</h3>
+                        <p style="color: var(--text-muted); line-height: 1.7; margin-bottom: 1rem;">
+                            FMCW(Frequency Modulated Continuous Wave) 레이더는 시간에 따라 주파수가 선형적으로 상승하는 **칩(Chirp) 신호**를 지속해서 방사합니다.
+                        </p>
+                        
+                        <div style="background: rgba(0,0,0,0.02); padding: 1.25rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.04); margin-bottom: 1.25rem;">
+                            <strong style="color: var(--primary); display:block; margin-bottom: 0.5rem; font-size: 0.95rem;">거리 계산 공식 (Distance Formula)</strong>
+                            <div style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: bold; text-align: center; margin: 1rem 0; color: var(--text-main);">
+                                R = (c × f_b × T_c) / (2 × B)
+                            </div>
+                            <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1.25rem; display: flex; flex-direction: column; gap: 4px;">
+                                <li><strong>c:</strong> 전파 속도 (빛의 속도, 3 × 10⁸ m/s)</li>
+                                <li><strong>f_b (Beat Frequency):</strong> 송수신 주파수 차이 (비트 주파수)</li>
+                                <li><strong>T_c (Chirp Duration):</strong> 주파수 쓸기(Sweep) 주기</li>
+                                <li><strong>B (Bandwidth):</strong> 스윕 대역폭 (주파수 범위)</li>
+                            </ul>
+                        </div>
+
+                        <h4 style="font-size: 1rem; font-weight: bold; color: var(--text-main); margin-bottom: 0.5rem;">왜 60GHz 레이더가 24GHz보다 우수할까요?</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+                            레이더의 거리 해상도(Range Resolution)는 <strong>d_R = c / (2 × B)</strong>로 결정됩니다.
+                        </p>
+                        <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1.25rem; display: flex; flex-direction: column; gap: 8px;">
+                            <li><strong style="color: var(--text-main);">24GHz 레이더 (대역폭 250MHz 내외):</strong> 물리적인 거리 분해능이 약 <strong>60cm</strong>에 달합니다. 사람과 주변 사물을 정밀하게 발라내지 못합니다.</li>
+                            <li><strong style="color: var(--text-main);">60GHz 레이더 (대역폭 최대 4GHz):</strong> 거리 분해능이 <strong>3.75cm</strong> 수준으로 극히 정밀합니다. 침대 위의 인간의 신체와 매트리스, 주변 정적 장애물을 명확히 구분할 수 있습니다.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Phase Modulation (Micro-Doppler) -->
+                    <div class="glass-card accent-purple">
+                        <h3 class="card-title"><i class="fa-solid fa-heart-pulse"></i> 2. 미세 도플러(Micro-Doppler) 및 생체 센싱</h3>
+                        <p style="color: var(--text-muted); line-height: 1.7; margin-bottom: 1rem;">
+                            호흡이나 심장 박동은 mm 단위 이하의 미세한 변위를 발생시키기 때문에 단순한 거리(R) 분석으로는 측정이 어렵습니다. 대신 레이더는 대상체로부터 반사된 전파의 **위상(Phase, θ) 변화**를 계측합니다.
+                        </p>
+
+                        <div style="background: rgba(0,0,0,0.02); padding: 1.25rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.04); margin-bottom: 1.25rem;">
+                            <strong style="color: var(--purple-grad); display:block; margin-bottom: 0.5rem; font-size: 0.95rem;">변위에 따른 위상 변위 공식</strong>
+                            <div style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: bold; text-align: center; margin: 1rem 0; color: var(--text-main);">
+                                Δθ = (4 × π × Δd) / λ
+                            </div>
+                            <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1.25rem; display: flex; flex-direction: column; gap: 4px;">
+                                <li><strong>Δθ (Delta Phase):</strong> 수신 신호의 위상 변화량 (라디안)</li>
+                                <li><strong>Δd (Displacement):</strong> 흉부의 물리적 변위 (호흡: 4~12mm, 심박: 0.1~0.5mm)</li>
+                                <li><strong>λ (Wavelength):</strong> 전파의 파장 (60GHz = 5mm, 24GHz = 12.5mm)</li>
+                            </ul>
+                        </div>
+
+                        <h4 style="font-size: 1rem; font-weight: bold; color: var(--text-main); margin-bottom: 0.5rem;">파장(λ)의 차이가 만드는 민감도의 차이</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                            60GHz 주파수 대역의 파장(λ)은 단 **5mm**에 불과합니다. 전파의 왕복 특성 때문에 호흡에 의해 가슴이 **1.25mm**만 움직여도 수신 위상은 무려 **180도(π rad, 반 파장 왕복)** 만큼 완전히 뒤집힙니다. 심장 박동에 의한 **0.25mm**의 미세 변위에도 위상이 **36도** 변하여, 24GHz 레이더(14.4도 변화) 대비 위상 감도가 **약 2.5배 민감**하므로 노이즈 속에서도 심박 변형 신호를 정확히 살려낼 수 있습니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- DSP Pipeline Section -->
+                <div class="glass-card accent-green" style="margin-bottom: 2rem;">
+                    <h3 class="card-title"><i class="fa-solid fa-microchip"></i> 3. 내부 DSP 신호 처리 파이프라인 (Signal Processing Flow)</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">레이더 전면 안테나를 통해 수신된 고주파 아날로그 반사파가 수치 데이터로 변환되는 5단계 필터 아키텍처입니다.</p>
+
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; gap: 1.5rem; border-left: 3px solid var(--primary); padding-left: 1.25rem;">
+                            <div style="min-width: 140px;"><strong style="color: var(--primary); font-size: 1.05rem;">1단계: Range FFT</strong></div>
+                            <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                                수신된 아날로그 비트 주파수(Beat frequency)를 디지털로 ADC 샘플링한 후 고속 푸리에 변환(FFT)을 수행합니다. 이를 통해 신호 강도를 거리 영역별(Range Bin)로 주파수 스펙트럼 화 합니다.
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1.5rem; border-left: 3px solid var(--purple); padding-left: 1.25rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+                            <div style="min-width: 140px;"><strong style="color: var(--purple); font-size: 1.05rem;">2단계: Target Bin 위상 추출</strong></div>
+                            <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                                여러 거리 구간 중 인체가 검출된 특정 거리 빈(Target Range Bin)을 선정하고, 해당 위치에서의 복소수 신호의 위상각(Phase Angle) 데이터를 시간에 따라 지속해서 아카이빙합니다(Slow-time sampling).
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1.5rem; border-left: 3px solid var(--warning); padding-left: 1.25rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+                            <div style="min-width: 140px;"><strong style="color: var(--warning); font-size: 1.05rem;">3단계: 위상 보정 (Unwrap)</strong></div>
+                            <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                                위상은 -π에서 +π 범위로 제한되므로, 범위를 넘을 때 튀는 현상을 방지하기 위해 연속된 복소 위상 값을 펴주는 Unwrap 연산을 적용합니다. 이어 전위차 성분을 활용하여 인접 프레임 간 차분을 구합니다.
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1.5rem; border-left: 3px solid var(--success); padding-left: 1.25rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+                            <div style="min-width: 140px;"><strong style="color: var(--success); font-size: 1.05rem;">4단계: 대역 필터링 (BPF)</strong></div>
+                            <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                                추출된 미세 변위 신호에서 각각의 타깃 신호를 분리하기 위해 디지털 Bandpass Filter(대역통과필터)를 통과시킵니다.
+                                <ul style="margin-top: 0.5rem; display:flex; flex-direction:column; gap:4px; list-style:circle; padding-left: 1.25rem;">
+                                    <li><strong>호흡 신호 필터 (Respiration Filter):</strong> 0.1Hz ~ 0.5Hz (분당 6회 ~ 30회 감지 영역)</li>
+                                    <li><strong>심박 신호 필터 (Heartrate Filter):</strong> 0.8Hz ~ 2.5Hz (분당 48회 ~ 150회 감지 영역)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1.5rem; border-left: 3px solid var(--info); padding-left: 1.25rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+                            <div style="min-width: 140px;"><strong style="color: var(--info); font-size: 1.05rem;">5단계: 주파수 스펙트럼 추정</strong></div>
+                            <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                                필터링된 호흡/심박 변형 데이터에 대해 2차 FFT 연산 또는 웰치 메서드(Welch's Method) 스펙트럼 분석을 수행하여 가장 지배적인 주파수 피크(Peak)를 검출하고, 이 주파수 성분을 바탕으로 최종 분당 횟수(BPM)를 결정하여 UART 프레임에 패킹합니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clutter and Practical challenges -->
+                <div class="glass-card accent-pink">
+                    <h3 class="card-title"><i class="fa-solid fa-shield-halved"></i> 4. 레이더 정적 클러터 및 예외 처리 (Clutter Suppression)</h3>
+                    <div class="grid-2col" style="gap: 2rem; margin-top: 1rem;">
+                        <div>
+                            <strong style="color: var(--text-main); font-size: 1rem; display:block; margin-bottom:0.5rem;">정적 클러터 소거 (Static Clutter Suppression)</strong>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                                실내에는 벽, 침대 헤드, 탁자 등 전파를 매우 강하게 반사하는 금속 및 콘크리트 구조물이 존재합니다. 레이더는 **동적 대상 지시(MTI - Moving Target Indicator)** 기술을 탑재하여 시간에 따라 신호가 전혀 변하지 않는 정적 클러터 반사파 성분을 수학적으로 완전 차감하여 대상의 순수한 움직임 정보만을 발라냅니다.
+                            </p>
+                        </div>
+                        <div>
+                            <strong style="color: var(--text-main); font-size: 1rem; display:block; margin-bottom:0.5rem;">동적 노이즈 (Dynamic Interference) 대책</strong>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                                선풍기 날개, 커튼의 흔들림, 에어컨의 바람 등은 mmWave 대역에서 가짜 생체 신호(False Presence)를 형성할 위험이 큽니다. 이를 방지하기 위해 MR60BHA2 센서는 **기본 감도 임계값(Threshold Gate)** 조절 레지스터를 갖고 있으며, 1차 주파수 강도가 특정 dB 이상일 때만 생체 분석 엔진을 구동하는 방식으로 허위 동작을 필터링합니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Tab switching logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            // Find nav link containing the onclick parameter matching tabId
+            const links = document.querySelectorAll('.nav-link');
+            links.forEach(link => {
+                if (link.getAttribute('onclick').includes(tabId)) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Specific tab initializations
+            if (tabId === 'simulator') {
+                setTimeout(() => {
+                    initChart();
+                }, 100);
+            }
+        }
+
+        // Checklist toggle
+        function toggleCheck(element) {
+            element.classList.toggle('checked');
+        }
+
+        // MCU Selecting for Wiring Guide (밝게 테마 조정된 SVG 소스)
+        const wiringSVGs = {
+            xiao: `
+            <svg class="svg-wiring" viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg">
+                <!-- Grid background -->
+                <defs>
+                    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.02)" stroke-width="1"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                
+                <!-- XIAO ESP32C6 -->
+                <rect x="30" y="80" width="160" height="190" class="device-box" fill="#ffffff" stroke="rgba(15, 23, 42, 0.15)" stroke-width="2" rx="10" />
+                <text x="110" y="110" text-anchor="middle" class="device-label" fill="#0f172a" font-weight="bold" font-family="Outfit">XIAO ESP32C6</text>
+                
+                <!-- Pins of XIAO -->
+                <text x="175" y="145" text-anchor="end" class="pin-label" fill="#475569">5V</text>
+                <circle cx="180" cy="140" r="4" class="connection-node vcc" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+                
+                <text x="175" y="175" text-anchor="end" class="pin-label" fill="#475569">GND</text>
+                <circle cx="180" cy="170" r="4" class="connection-node gnd" fill="#ffffff" stroke="#475569" stroke-width="2" />
+                
+                <text x="175" y="205" text-anchor="end" class="pin-label" fill="#475569">D7 (RX)</text>
+                <circle cx="180" cy="200" r="4" class="connection-node rx" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+                
+                <text x="175" y="235" text-anchor="end" class="pin-label" fill="#475569">D6 (TX)</text>
+                <circle cx="180" cy="230" r="4" class="connection-node tx" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+                
+                <!-- MR60BHA2 Sensor Module -->
+                <rect x="310" y="50" width="160" height="250" class="device-box" fill="#ffffff" stroke="#0ea5e9" stroke-width="2" rx="10" />
+                <text x="390" y="80" text-anchor="middle" class="device-label" fill="#0f172a" font-weight="bold" font-family="Outfit">MR60BHA2</text>
+                
+                <!-- Pins of Sensor -->
+                <circle cx="320" cy="120" r="4" class="connection-node vcc" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+                <text x="330" y="125" text-anchor="start" class="pin-label" fill="#475569">VCC (5V)</text>
+                
+                <circle cx="320" cy="160" r="4" class="connection-node gnd" fill="#ffffff" stroke="#475569" stroke-width="2" />
+                <text x="330" y="165" text-anchor="start" class="pin-label" fill="#475569">GND</text>
+                
+                <circle cx="320" cy="200" r="4" class="connection-node tx" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+                <text x="330" y="205" text-anchor="start" class="pin-label" fill="#475569">TXD (Out)</text>
+                
+                <circle cx="320" cy="240" r="4" class="connection-node rx" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+                <text x="330" y="245" text-anchor="start" class="pin-label" fill="#475569">RXD (In)</text>
+                
+                <!-- Wires (교차 연결 및 개별 굴곡 X오프셋 수정) -->
+                <!-- VCC: 140 -> 120 (X=215) -->
+                <path d="M 180 140 L 215 140 L 215 120 L 320 120" class="wire-vcc" fill="none" stroke="#dc2626" stroke-width="3" />
+                <!-- GND: 170 -> 160 (X=235) -->
+                <path d="M 180 170 L 235 170 L 235 160 L 320 160" class="wire-gnd" fill="none" stroke="#475569" stroke-width="3" />
+                <!-- RX (D7 RX <- TXD): Both at 200 (Straight) -->
+                <path d="M 180 200 L 320 200" class="wire-tx" fill="none" stroke="#0284c7" stroke-width="3" />
+                <!-- TX (D6 TX -> RXD): 230 -> 240 (X=275) -->
+                <path d="M 180 230 L 275 230 L 275 240 L 320 240" class="wire-rx" fill="none" stroke="#7c3aed" stroke-width="3" />
+            </svg>`,
+            esp32: `
+            <svg class="svg-wiring" viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                
+                <!-- ESP32 Board -->
+                <rect x="30" y="50" width="160" height="250" class="device-box" fill="#ffffff" stroke="rgba(15, 23, 42, 0.15)" stroke-width="2" rx="10" />
+                <text x="110" y="80" text-anchor="middle" class="device-label" fill="#0f172a" font-weight="bold" font-family="Outfit">ESP32 DevKit</text>
+                
+                <!-- Pins of ESP32 -->
+                <text x="175" y="125" text-anchor="end" class="pin-label" fill="#475569">5V (V5)</text>
+                <circle cx="180" cy="120" r="4" class="connection-node vcc" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+                
+                <text x="175" y="165" text-anchor="end" class="pin-label" fill="#475569">GND</text>
+                <circle cx="180" cy="160" r="4" class="connection-node gnd" fill="#ffffff" stroke="#475569" stroke-width="2" />
+                
+                <text x="175" y="205" text-anchor="end" class="pin-label" fill="#475569">GPIO 16 (RX2)</text>
+                <circle cx="180" cy="200" r="4" class="connection-node rx" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+                
+                <text x="175" y="245" text-anchor="end" class="pin-label" fill="#475569">GPIO 17 (TX2)</text>
+                <circle cx="180" cy="240" r="4" class="connection-node tx" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+                
+                <!-- MR60BHA2 Sensor Module -->
+                <rect x="310" y="50" width="160" height="250" class="device-box" fill="#ffffff" stroke="#0ea5e9" stroke-width="2" rx="10" />
+                <text x="390" y="80" text-anchor="middle" class="device-label" fill="#0f172a" font-weight="bold" font-family="Outfit">MR60BHA2</text>
+                
+                <!-- Pins of Sensor -->
+                <circle cx="320" cy="120" r="4" class="connection-node vcc" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+                <text x="330" y="125" text-anchor="start" class="pin-label" fill="#475569">VCC (5V)</text>
+                
+                <circle cx="320" cy="160" r="4" class="connection-node gnd" fill="#ffffff" stroke="#475569" stroke-width="2" />
+                <text x="330" y="165" text-anchor="start" class="pin-label" fill="#475569">GND</text>
+                
+                <circle cx="320" cy="200" r="4" class="connection-node tx" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+                <text x="330" y="205" text-anchor="start" class="pin-label" fill="#475569">TXD (Out)</text>
+                
+                <circle cx="320" cy="240" r="4" class="connection-node rx" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+                <text x="330" y="245" text-anchor="start" class="pin-label" fill="#475569">RXD (In)</text>
+                
+                <!-- Wires (ESP32는 핀 배열이 레이더와 수평 일치하여 직결) -->
+                <!-- VCC -->
+                <path d="M 180 120 L 320 120" class="wire-vcc" fill="none" stroke="#dc2626" stroke-width="3" />
+                <!-- GND -->
+                <path d="M 180 160 L 320 160" class="wire-gnd" fill="none" stroke="#475569" stroke-width="3" />
+                <!-- RX (GPIO16 <- TXD) -->
+                <path d="M 180 200 L 320 200" class="wire-tx" fill="none" stroke="#0284c7" stroke-width="3" />
+                <!-- TX (GPIO17 -> RXD) -->
+                <path d="M 180 240 L 320 240" class="wire-rx" fill="none" stroke="#7c3aed" stroke-width="3" />
+            </svg>`,
+            arduino: `
+            <svg class="svg-wiring" viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                
+                <!-- Arduino Uno -->
+                <rect x="30" y="40" width="160" height="270" class="device-box" fill="#ffffff" stroke="rgba(15, 23, 42, 0.15)" stroke-width="2" rx="10" />
+                <text x="110" y="70" text-anchor="middle" class="device-label" fill="#0f172a" font-weight="bold" font-family="Outfit">Arduino Uno</text>
+                
+                <!-- Pins -->
+                <text x="175" y="115" text-anchor="end" class="pin-label" fill="#475569">5V</text>
+                <circle cx="180" cy="110" r="4" class="connection-node vcc" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+                
+                <text x="175" y="155" text-anchor="end" class="pin-label" fill="#475569">GND</text>
+                <circle cx="180" cy="150" r="4" class="connection-node gnd" fill="#ffffff" stroke="#475569" stroke-width="2" />
+                
+                <text x="175" y="195" text-anchor="end" class="pin-label" fill="#475569">D10 (SoftRX)</text>
+                <circle cx="180" cy="190" r="4" class="connection-node rx" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+                
+                <text x="175" y="235" text-anchor="end" class="pin-label" fill="#475569">D11 (SoftTX)</text>
+                <circle cx="180" cy="230" r="4" class="connection-node tx" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+                
+                <!-- MR60BHA2 Sensor Module -->
+                <rect x="310" y="50" width="160" height="250" class="device-box" fill="#ffffff" stroke="#0ea5e9" stroke-width="2" rx="10" />
+                <text x="390" y="80" text-anchor="middle" class="device-label" fill="#0f172a" font-weight="bold" font-family="Outfit">MR60BHA2</text>
+                
+                <!-- Pins of Sensor -->
+                <circle cx="320" cy="120" r="4" class="connection-node vcc" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+                <text x="330" y="125" text-anchor="start" class="pin-label" fill="#475569">VCC (5V)</text>
+                
+                <circle cx="320" cy="160" r="4" class="connection-node gnd" fill="#ffffff" stroke="#475569" stroke-width="2" />
+                <text x="330" y="165" text-anchor="start" class="pin-label" fill="#475569">GND</text>
+                
+                <circle cx="320" cy="200" r="4" class="connection-node tx" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+                <text x="330" y="205" text-anchor="start" class="pin-label" fill="#475569">TXD (Out)</text>
+                
+                <circle cx="320" cy="240" r="4" class="connection-node rx" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+                <text x="330" y="245" text-anchor="start" class="pin-label" fill="#475569">RXD (In)</text>
+                
+                <!-- Wires (개별 굴곡 X오프셋 적용하여 합선 착시 해결) -->
+                <!-- VCC: 110 -> 120 (X=215) -->
+                <path d="M 180 110 L 215 110 L 215 120 L 320 120" class="wire-vcc" fill="none" stroke="#dc2626" stroke-width="3" />
+                <!-- GND: 150 -> 160 (X=235) -->
+                <path d="M 180 150 L 235 150 L 235 160 L 320 160" class="wire-gnd" fill="none" stroke="#475569" stroke-width="3" />
+                <!-- RX (D10 RX <- TXD): 190 -> 200 (X=255) -->
+                <path d="M 180 190 L 255 190 L 255 200 L 320 200" class="wire-tx" fill="none" stroke="#0284c7" stroke-width="3" />
+                <!-- TX (D11 TX -> RXD): 230 -> 240 (X=275) -->
+                <path d="M 180 230 L 275 230 L 275 240 L 320 240" class="wire-rx" fill="none" stroke="#7c3aed" stroke-width="3" />
+            </svg>`
+        };
+
+        const mcuTableData = {
+            xiao: `
+                <thead>
+                    <tr>
+                        <th>MR60BHA2 핀</th>
+                        <th>배선 방향</th>
+                        <th>XIAO ESP32C6 핀</th>
+                        <th>기능 설명 (D6/D7 번들 매핑)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="pin-tag vcc">VCC</span></td>
+                        <td>&larr; (전원 공급)</td>
+                        <td><span class="pin-tag vcc">5V</span></td>
+                        <td>번들 메인보드 및 USB 5V 연결</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag gnd">GND</span></td>
+                        <td>&harr; (접지 접합)</td>
+                        <td><span class="pin-tag gnd">GND</span></td>
+                        <td>공통 접지 (그라운드)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag tx">TXD</span></td>
+                        <td>&rarr; (센서 출력)</td>
+                        <td><span class="pin-tag rx">D7 (RX / GPIO 21)</span></td>
+                        <td>하드웨어 시리얼 교차 수신 (Rx)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag rx">RXD</span></td>
+                        <td>&larr; (센서 입력)</td>
+                        <td><span class="pin-tag tx">D6 (TX / GPIO 20)</span></td>
+                        <td>하드웨어 시리얼 교차 송신 (Tx)</td>
+                    </tr>
+                </tbody>
+            `,
+            esp32: `
+                <thead>
+                    <tr>
+                        <th>MR60BHA2 핀</th>
+                        <th>배선 방향</th>
+                        <th>ESP32 개발 보드 핀</th>
+                        <th>기능 설명</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="pin-tag vcc">VCC</span></td>
+                        <td>&larr; (전원 공급)</td>
+                        <td><span class="pin-tag vcc">5V / VIN</span></td>
+                        <td>외부 5V 전원 또는 보드 V5 공급</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag gnd">GND</span></td>
+                        <td>&harr; (접지 접합)</td>
+                        <td><span class="pin-tag gnd">GND</span></td>
+                        <td>공통 접지 레벨 맞춤</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag tx">TXD</span></td>
+                        <td>&rarr; (센서 출력)</td>
+                        <td><span class="pin-tag rx">GPIO 16 (RX2)</span></td>
+                        <td>센서 데이터 전송 &rarr; MCU 수신</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag rx">RXD</span></td>
+                        <td>&larr; (센서 입력)</td>
+                        <td><span class="pin-tag tx">GPIO 17 (TX2)</span></td>
+                        <td>MCU 명령 하달 &rarr; 센서 수신</td>
+                    </tr>
+                </tbody>
+            `,
+            arduino: `
+                <thead>
+                    <tr>
+                        <th>MR60BHA2 핀</th>
+                        <th>배선 방향</th>
+                        <th>Arduino Uno 핀</th>
+                        <th>기능 설명</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="pin-tag vcc">VCC</span></td>
+                        <td>&larr; (전원 공급)</td>
+                        <td><span class="pin-tag vcc">5V</span></td>
+                        <td>아두이노 5V 출력단 연결</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag gnd">GND</span></td>
+                        <td>&harr; (접지 접합)</td>
+                        <td><span class="pin-tag gnd">GND</span></td>
+                        <td>그라운드 접합</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag tx">TXD</span></td>
+                        <td>&rarr; (센서 출력)</td>
+                        <td><span class="pin-tag rx">D10 (SoftRX)</span></td>
+                        <td>SoftwareSerial 라이브러리로 수신</td>
+                    </tr>
+                    <tr>
+                        <td><span class="pin-tag rx">RXD</span></td>
+                        <td>&larr; (센서 입력)</td>
+                        <td><span class="pin-tag tx">D11 (SoftTX)</span></td>
+                        <td>SoftwareSerial 라이브러리로 송신</td>
+                    </tr>
+                </tbody>
+            `
+        };
+
+        function selectMCU(mcuType) {
+            document.querySelectorAll('.btn-mcu').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Find the button with matching selectMCU argument
+            const btn = Array.from(document.querySelectorAll('.btn-mcu')).find(b => b.getAttribute('onclick').includes(mcuType));
+            if (btn) btn.classList.add('active');
+
+            // Inject SVG
+            document.getElementById('wiring-svg-container').innerHTML = wiringSVGs[mcuType];
+            // Update Table
+            document.getElementById('pinout-table-body').innerHTML = mcuTableData[mcuType];
+        }
+
+        // 기본 활성 보드를 xiao로 초기화
+        selectMCU('xiao');
+
+
+        // ==========================================
+        // PROTOCOL SIMULATOR LOGIC
+        // ==========================================
+        const protocolSpecs = {
+            '0x80': { // Human Presence
+                name: '인체 존재 정보 (0x80)',
+                commands: {
+                    '0x01': { name: '존재 유무 감지 (Someone Present)', values: [{ val: '0x00', name: '아무도 없음 (No One)' }, { val: '0x01', name: '사람 있음 (Someone Here)' }] },
+                    '0x02': { name: '움직임 상태 (Motion Status)', values: [{ val: '0x00', name: '정지 상태 (None)' }, { val: '0x01', name: '미세 진동/정지 존재 (Static/Stationary)' }, { val: '0x02', name: '활동적 움직임 (Active/Moving)' }] },
+                    '0x03': { name: '움직임 에너지 강도 (Motion Amplitude)', range: [0, 100], unit: '' },
+                    '0x04': { name: '대상과의 거리 (Target Distance)', range: [0, 600], unit: 'cm (2바이트 변환)' }
+                }
+            },
+            '0x81': { // Breathing
+                name: '호흡 감지 정보 (0x81)',
+                commands: {
+                    '0x01': { name: '실시간 호흡수 (Breath Rate)', range: [8, 30], unit: 'rpm (회/분)' },
+                    '0x02': { name: '호흡 파형 데이터 (Breath Curve)', range: [0, 100], unit: '상대진폭' },
+                    '0x05': { name: '호흡 비정상 상태 (Respiratory State)', values: [{ val: '0x00', name: '판정 불가 / 대기' }, { val: '0x01', name: '정상 호흡 (Normal)' }, { val: '0x02', name: '과호흡 / 급속 (Rapid)' }, { val: '0x03', name: '서호흡 / 느림 (Slow)' }, { val: '0x04', name: '무호흡 의심 (None/Apnea)' }] }
+                }
+            },
+            '0x85': { // Heart Rate
+                name: '심박수 정보 (0x85)',
+                commands: {
+                    '0x02': { name: '실시간 심박수 (Heart Rate)', range: [45, 140], unit: 'bpm (회/분)' },
+                    '0x05': { name: '심박 파형 데이터 (Heart Curve)', range: [0, 120], unit: '상대진폭' }
+                }
+            },
+            '0x84': { // Sleep pattern
+                name: '수면 패턴 정보 (0x84)',
+                commands: {
+                    '0x01': { name: '재침대 착석 상태 (In-bed/Out-bed)', values: [{ val: '0x00', name: '침대 밖으로 이탈 (Out of Bed)' }, { val: '0x01', name: '침대 위 착석/취침 (In Bed)' }] },
+                    '0x02': { name: '수면 깊이 상태 (Sleep State)', values: [{ val: '0x00', name: '깊은 수면 (Deep Sleep)' }, { val: '0x01', name: '얕은 수면 (Light Sleep)' }, { val: '0x02', name: '각성 / 잠 깸 (Awake)' }] }
+                }
+            },
+            '0x01': { // System Info
+                name: '시스템 제어 정보 (0x01)',
+                commands: {
+                    '0x01': { name: '센서 하트비트 생존 보고 (Heartbeat Packet)', values: [{ val: '0x0f', name: '정상 동작 신호' }] },
+                    '0x02': { name: '모듈 리셋 명령 (Reset Module)', values: [{ val: '0x0f', name: '재설정 수행' }] }
+                }
+            }
+        };
+
+        function updateEncCommands() {
+            const ctrlVal = document.getElementById('enc-control').value;
+            const cmdSelect = document.getElementById('enc-command');
+            cmdSelect.innerHTML = '';
+            
+            const spec = protocolSpecs[ctrlVal];
+            if (spec) {
+                Object.keys(spec.commands).forEach(cmdKey => {
+                    const option = document.createElement('option');
+                    option.value = cmdKey;
+                    option.textContent = `${spec.commands[cmdKey].name} (${cmdKey})`;
+                    cmdSelect.appendChild(option);
+                });
+            }
+            updateEncValueOptions();
+        }
+
+        function updateEncValueOptions() {
+            const ctrlVal = document.getElementById('enc-control').value;
+            const cmdVal = document.getElementById('enc-command').value;
+            const container = document.getElementById('enc-val-container');
+            container.innerHTML = '';
+
+            if (!ctrlVal || !cmdVal) return;
+
+            const cmdSpec = protocolSpecs[ctrlVal].commands[cmdVal];
+            if (!cmdSpec) return;
+
+            if (cmdSpec.values) {
+                const select = document.createElement('select');
+                select.className = 'form-control';
+                select.id = 'enc-value-input';
+                cmdSpec.values.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.val;
+                    opt.textContent = `${v.name} (${v.val})`;
+                    select.appendChild(opt);
+                });
+                container.appendChild(select);
+                document.getElementById('enc-val-label').textContent = '상태값 선택';
+            } else if (cmdSpec.range) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'form-control';
+                input.id = 'enc-value-input';
+                input.min = cmdSpec.range[0];
+                input.max = cmdSpec.range[1];
+                input.value = Math.floor((cmdSpec.range[0] + cmdSpec.range[1]) / 2);
+                
+                const span = document.createElement('span');
+                span.style.fontSize = '0.85rem';
+                span.style.color = 'var(--text-muted)';
+                span.style.marginTop = '4px';
+                span.style.display = 'block';
+                span.textContent = `허용 범위: ${cmdSpec.range[0]} ~ ${cmdSpec.range[1]} ${cmdSpec.unit}`;
+                
+                container.appendChild(input);
+                container.appendChild(span);
+                document.getElementById('enc-val-label').textContent = '측정 수치 입력';
+            }
+        }
+
+        function generateHexPacket() {
+            const header = [0x53, 0x59]; // 'S' 'Y'
+            const footer = [0x54, 0x43]; // 'T' 'C'
+            
+            const ctrlByte = parseInt(document.getElementById('enc-control').value);
+            const cmdByte = parseInt(document.getElementById('enc-command').value);
+            
+            const ctrlKey = document.getElementById('enc-control').value;
+            const cmdKey = document.getElementById('enc-command').value;
+            const cmdSpec = protocolSpecs[ctrlKey].commands[cmdKey];
+            
+            let dataBytes = [];
+            const rawVal = document.getElementById('enc-value-input').value;
+            
+            if (cmdSpec.values) {
+                dataBytes.push(parseInt(rawVal));
+            } else if (cmdSpec.range) {
+                let numericVal = parseInt(rawVal);
+                if (isNaN(numericVal)) numericVal = cmdSpec.range[0];
+                numericVal = Math.max(cmdSpec.range[0], Math.min(cmdSpec.range[1], numericVal));
+                
+                if (cmdSpec.unit.includes('2바이트')) {
+                    dataBytes.push((numericVal >> 8) & 0xFF);
+                    dataBytes.push(numericVal & 0xFF);
+                } else {
+                    dataBytes.push(numericVal & 0xFF);
+                }
+            }
+
+            const lenMSB = (dataBytes.length >> 8) & 0xFF;
+            const lenLSB = dataBytes.length & 0xFF;
+
+            const preChecksumArray = [
+                ...header,
+                ctrlByte,
+                cmdByte,
+                lenMSB,
+                lenLSB,
+                ...dataBytes
+            ];
+
+            const sum = preChecksumArray.reduce((acc, b) => acc + b, 0);
+            const checksumByte = sum & 0xFF;
+
+            const finalFrame = [
+                ...preChecksumArray,
+                checksumByte,
+                ...footer
+            ];
+
+            const container = document.getElementById('hex-output-container');
+            container.innerHTML = '';
+
+            const byteLabels = [
+                { type: 'header', label: 'HEAD1' },
+                { type: 'header', label: 'HEAD2' },
+                { type: 'control', label: 'CTRL' },
+                { type: 'command', label: 'CMD' },
+                { type: 'length', label: 'LEN_H' },
+                { type: 'length', label: 'LEN_L' }
+            ];
+            
+            for(let i=0; i<dataBytes.length; i++) {
+                byteLabels.push({ type: 'data', label: `DATA[${i}]` });
+            }
+            
+            byteLabels.push({ type: 'checksum', label: 'CKSUM' });
+            byteLabels.push({ type: 'footer', label: 'END1' });
+            byteLabels.push({ type: 'footer', label: 'END2' });
+
+            finalFrame.forEach((byte, idx) => {
+                const block = document.createElement('div');
+                const lblData = byteLabels[idx] || { type: 'data', label: 'DATA' };
+                block.className = `byte-block ${lblData.type}`;
+                
+                const hexStr = byte.toString(16).toUpperCase().padStart(2, '0');
+                block.innerHTML = `
+                    <span class="hex">${hexStr}</span>
+                    <span class="lbl">${lblData.label}</span>
+                `;
+                container.appendChild(block);
+            });
+        }
+
+        updateEncCommands();
+
+        // DECODER LOGIC
+        function decodeHexPacket() {
+            const rawInput = document.getElementById('dec-input').value.trim();
+            const cleanHex = rawInput.replace(/0x/g, '').replace(/[^0-9A-Fa-f]/g, ' ');
+            const hexArray = cleanHex.split(/\s+/).filter(x => x.length > 0);
+            
+            const resultDiv = document.getElementById('dec-result-container');
+            resultDiv.innerHTML = '';
+
+            if (hexArray.length < 10) {
+                resultDiv.innerHTML = `<div class="alert-box danger"><i class="fa-solid fa-triangle-exclamation"></i><div class="alert-content"><h5>디코딩 실패</h5><p>프레임 길이가 너무 짧습니다. 완벽한 프레임은 헤더, 제어, 명령, 길이, 데이터, 체크섬, 엔드 바이트를 포함하여 최소 10바이트 이상이어야 합니다.</p></div></div>`;
+                return;
+            }
+
+            const bytes = hexArray.map(h => parseInt(h, 16));
+
+            if (bytes[0] !== 0x53 || bytes[1] !== 0x59) {
+                resultDiv.innerHTML = `<div class="alert-box danger"><i class="fa-solid fa-circle-xmark"></i><div class="alert-content"><h5>헤더 불일치</h5><p>헤더 바이트가 올바르지 않습니다. 반드시 0x53 0x59로 시작해야 센서 통신 프로토콜로 인정받을 수 있습니다.</p></div></div>`;
+                return;
+            }
+
+            const lenBytes = bytes.length;
+            if (bytes[lenBytes - 2] !== 0x54 || bytes[lenBytes - 1] !== 0x43) {
+                resultDiv.innerHTML = `<div class="alert-box danger"><i class="fa-solid fa-circle-xmark"></i><div class="alert-content"><h5>테일(끝) 바이트 불일치</h5><p>프레임 종결자가 올바르지 않습니다. 0x54 0x43 (T C)로 완결되어야 합니다.</p></div></div>`;
+                return;
+            }
+
+            const ctrlByte = bytes[2];
+            const cmdByte = bytes[3];
+            const payloadLen = (bytes[4] << 8) | bytes[5];
+            const dataBytes = bytes.slice(6, 6 + payloadLen);
+            const rcvdChecksum = bytes[6 + payloadLen];
+
+            const preSumArray = bytes.slice(0, 6 + payloadLen);
+            const calculatedChecksum = preSumArray.reduce((a, b) => a + b, 0) & 0xFF;
+
+            const isChecksumOk = (rcvdChecksum === calculatedChecksum);
+
+            let ctrlText = `알 수 없는 제어구역 (0x${ctrlByte.toString(16).toUpperCase()})`;
+            let cmdText = `알 수 없는 명령어 (0x${cmdByte.toString(16).toUpperCase()})`;
+            let interpretation = '알 수 없는 원시 데이터';
+
+            const ctrlKey = '0x' + ctrlByte.toString(16).padStart(2, '0').toLowerCase();
+            const cmdKey = '0x' + cmdByte.toString(16).padStart(2, '0').toLowerCase();
+
+            if (protocolSpecs[ctrlKey]) {
+                ctrlText = protocolSpecs[ctrlKey].name;
+                const cmdSpec = protocolSpecs[ctrlKey].commands[cmdKey];
+                if (cmdSpec) {
+                    cmdText = cmdSpec.name;
+                    
+                    if (cmdSpec.values) {
+                        const matchedVal = cmdSpec.values.find(v => parseInt(v.val) === dataBytes[0]);
+                        interpretation = matchedVal ? matchedVal.name : `정의되지 않은 속성값 (0x${dataBytes[0].toString(16)})`;
+                    } else if (cmdSpec.range) {
+                        let numericVal = 0;
+                        if (cmdSpec.unit.includes('2바이트') && dataBytes.length >= 2) {
+                            numericVal = (dataBytes[0] << 8) | dataBytes[1];
+                        } else {
+                            numericVal = dataBytes[0];
+                        }
+                        interpretation = `${numericVal} ${cmdSpec.unit.replace(' (2바이트 변환)', '')}`;
+                    }
+                }
+            }
+
+            const statusClass = isChecksumOk ? 'info' : 'danger';
+            const statusIcon = isChecksumOk ? 'fa-circle-check' : 'fa-circle-xmark';
+            const statusTitle = isChecksumOk ? '통신 패킷 디코딩 완료' : '체크섬 오류 발생';
+            const checkStatusMsg = isChecksumOk ? 
+                `체크섬 정상 검증 완료 (수신값: 0x${rcvdChecksum.toString(16).toUpperCase()})` : 
+                `체크섬 오류! 수신값: 0x${rcvdChecksum.toString(16).toUpperCase()}, 검증 계산값: 0x${calculatedChecksum.toString(16).toUpperCase()}`;
+
+            resultDiv.innerHTML = `
+                <div class="alert-box ${statusClass}">
+                    <i class="fa-solid ${statusIcon}"></i>
+                    <div class="alert-content">
+                        <h5>${statusTitle}</h5>
+                        <p>${checkStatusMsg}</p>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:1rem; font-size:0.95rem;">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:5px;">
+                        <span style="color:var(--text-muted); font-weight: 600;">데이터 종류:</span>
+                        <span style="font-weight:700; color:var(--text-main);">${ctrlText}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:5px;">
+                        <span style="color:var(--text-muted); font-weight: 600;">수행 명령어:</span>
+                        <span style="font-weight:700; color:var(--primary);">${cmdText}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:5px;">
+                        <span style="color:var(--text-muted); font-weight: 600;">데이터 길이:</span>
+                        <span style="font-weight:700; color:var(--text-main);">${payloadLen} 바이트</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:5px;">
+                        <span style="color:var(--text-muted); font-weight: 600;">원시 데이터 값 (HEX):</span>
+                        <span style="font-family:var(--font-mono); color:var(--secondary); font-weight: 600;">${dataBytes.map(d => d.toString(16).toUpperCase().padStart(2, '0')).join(' ')}</span>
+                    </div>
+                    <div style="background:rgba(2,132,199,0.06); padding:1rem; border-radius:8px; border:1px solid rgba(2,132,199,0.15); margin-top:0.5rem; text-align:center;">
+                        <span style="display:block; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight: 700;">해석 결과 (Interpretation)</span>
+                        <span style="font-size:1.3rem; font-weight:800; color:var(--text-main);">${interpretation}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // LIVE SIMULATION & GRAPH (Bright Style)
+        // ==========================================
+        let liveStreamInterval = null;
+        let isStreaming = false;
+        let streamChart = null;
+        let chartTime = 0;
+        let dynamicHr = 72;
+        let dynamicBr = 16;
+        let dynamicPresence = 1;
+        let dynamicDistance = 1.15;
+
+        function initChart() {
+            if (streamChart) return;
+            
+            const ctx = document.getElementById('waveform-chart').getContext('2d');
+            streamChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 40}, (_, i) => ''),
+                    datasets: [
+                        {
+                            label: '심박동 파형 (Heart Pulse Wave)',
+                            data: Array(40).fill(0),
+                            borderColor: '#db2777',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: '호흡 파형 (Respiratory Breathing Wave)',
+                            data: Array(40).fill(0),
+                            borderColor: '#0284c7',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: -20,
+                            max: 120,
+                            grid: { color: 'rgba(0,0,0,0.03)' },
+                            ticks: { display: false }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#475569',
+                                font: { family: 'Outfit', size: 10, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function toggleLiveStream() {
+            const btn = document.getElementById('btn-stream');
+            if (isStreaming) {
+                clearInterval(liveStreamInterval);
+                isStreaming = false;
+                btn.innerHTML = '<i class="fa-solid fa-play"></i> 스트림 시작';
+                btn.style.borderColor = 'var(--success)';
+                btn.style.color = 'var(--success)';
+                writeToTerminal("info", "시뮬레이션 정지됨.");
+            } else {
+                isStreaming = true;
+                btn.innerHTML = '<i class="fa-solid fa-pause"></i> 일시 정지';
+                btn.style.borderColor = 'var(--secondary)';
+                btn.style.color = 'var(--secondary)';
+                writeToTerminal("info", "시리얼 스트림 데이터 수신 시작... (Baud: 115200)");
+                
+                liveStreamInterval = setInterval(simulateIncomingDataPacket, 250);
+            }
+        }
+
+        function writeToTerminal(direction, message) {
+            const term = document.getElementById('serial-terminal');
+            const line = document.createElement('div');
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString() + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            
+            if (direction === 'info') {
+                line.className = 'terminal-line info';
+                line.innerHTML = `<span class="time">${timeStr}</span><span class="msg">${message}</span>`;
+            } else if (direction === 'error') {
+                line.className = 'terminal-line error';
+                line.innerHTML = `<span class="time">${timeStr}</span><span class="msg">${message}</span>`;
+            } else {
+                line.className = 'terminal-line';
+                line.innerHTML = `<span class="time">${timeStr}</span><span class="dir">[RX &larr;]</span><span class="msg">${message}</span>`;
+            }
+            
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+
+            if (term.childNodes.length > 50) {
+                term.removeChild(term.firstChild);
+            }
+        }
+
+        function clearConsole() {
+            document.getElementById('serial-terminal').innerHTML = '';
+        }
+
+        function simulateIncomingDataPacket() {
+            chartTime += 0.25;
+
+            const hrFreq = (dynamicHr / 60) * 2 * Math.PI;
+            let heartWave = Math.sin(chartTime * hrFreq) * 20 + 30;
+            if (Math.sin(chartTime * hrFreq) > 0.8) {
+                heartWave += 45;
+            } else {
+                heartWave += (Math.random() - 0.5) * 5;
+            }
+
+            const brFreq = (dynamicBr / 60) * 2 * Math.PI;
+            const breathWave = Math.sin(chartTime * brFreq) * 35 + 40 + (Math.random() - 0.5) * 2;
+
+            if (streamChart) {
+                streamChart.data.datasets[0].data.shift();
+                streamChart.data.datasets[0].data.push(heartWave);
+                streamChart.data.datasets[1].data.shift();
+                streamChart.data.datasets[1].data.push(breathWave);
+                streamChart.update('none');
+            }
+
+            const randVal = Math.random();
+            let hexStr = "";
+            let dataVal = 0;
+
+            if (randVal < 0.15) {
+                if (Math.random() < 0.05) {
+                    dynamicPresence = dynamicPresence === 1 ? 0 : 1;
+                }
+                dataVal = dynamicPresence;
+                hexStr = buildRawPacketHex(0x80, 0x01, [dataVal]);
+                writeToTerminal("rx", hexStr + ` (인체존재: ${dataVal === 1 ? '감지됨' : '없음'})`);
+                document.getElementById('vital-presence').textContent = dataVal === 1 ? 'ON' : 'OFF';
+                
+                const card = document.getElementById('vital-presence').parentElement;
+                if (dataVal === 1) {
+                    card.style.background = 'rgba(5, 150, 105, 0.08)';
+                    card.style.borderColor = 'var(--success)';
+                } else {
+                    card.style.background = '#ffffff';
+                    card.style.borderColor = 'rgba(0,0,0,0.06)';
+                }
+            } else if (randVal < 0.35) {
+                dynamicHr += Math.random() > 0.5 ? 1 : -1;
+                dynamicHr = Math.max(60, Math.min(95, dynamicHr));
+                dataVal = dynamicHr;
+                hexStr = buildRawPacketHex(0x85, 0x02, [dataVal]);
+                writeToTerminal("rx", hexStr + ` (심박수 보고: ${dataVal} bpm)`);
+                document.getElementById('vital-hr').textContent = dataVal;
+            } else if (randVal < 0.55) {
+                dynamicBr += Math.random() > 0.7 ? 1 : (Math.random() < 0.3 ? -1 : 0);
+                dynamicBr = Math.max(12, Math.min(22, dynamicBr));
+                dataVal = dynamicBr;
+                hexStr = buildRawPacketHex(0x81, 0x01, [dataVal]);
+                writeToTerminal("rx", hexStr + ` (호흡수 보고: ${dataVal} rpm)`);
+                document.getElementById('vital-br').textContent = dataVal;
+            } else if (randVal < 0.65) {
+                dynamicDistance += (Math.random() - 0.5) * 0.02;
+                dynamicDistance = Math.max(0.8, Math.min(1.4, dynamicDistance));
+                const distCm = Math.round(dynamicDistance * 100);
+                const bytes = [(distCm >> 8) & 0xFF, distCm & 0xFF];
+                hexStr = buildRawPacketHex(0x80, 0x04, bytes);
+                writeToTerminal("rx", hexStr + ` (대상 거리: ${dynamicDistance.toFixed(2)} m)`);
+            } else if (randVal < 0.75) {
+                const state = dynamicPresence === 1 ? (heartWave > 65 ? 2 : 1) : 0;
+                hexStr = buildRawPacketHex(0x80, 0x02, [state]);
+                const stateName = state === 2 ? '활발한 움직임' : (state === 1 ? '미세 진동(호흡 정지)' : '무인');
+                writeToTerminal("rx", hexStr + ` (움직임 상태: ${stateName})`);
+            }
+        }
+
+        function buildRawPacketHex(ctrl, cmd, dataArray) {
+            const frame = [0x53, 0x59, ctrl, cmd, (dataArray.length >> 8) & 0xFF, dataArray.length & 0xFF, ...dataArray];
+            const sum = frame.reduce((acc, b) => acc + b, 0);
+            frame.push(sum & 0xFF);
+            frame.push(0x54);
+            frame.push(0x43);
+            return frame.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+        }
+
+
+        // ==========================================
+        // CODE GENERATOR LOGIC
+        // ==========================================
+        const codeTemplates = {
+            esp32_wifi_mqtt: `// [XIAO ESP32C6 / ESP32] Wi-Fi 및 MQTT를 사용하여 라즈베리 파이로 데이터 전송하기
+// 아두이노 라이브러리 매니저에서 PubSubClient 라이브러리를 설치해 주십시오.
+// 센서 데이터 수신은 공식 Seeed_Arduino_mmWave 라이브러리를 활용합니다.
+
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <Seeed_Arduino_mmWave.h>
+
+// 1. Wi-Fi 및 MQTT 설정 (본인 환경에 맞게 수정)
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
+const char* mqtt_server = "YOUR_RASPBERRY_PI_IP"; // 예: "192.168.0.100"
+const int mqtt_port = 1883;
+
+// Hardware Serial 핀 매핑 (D6/D7)
+#define RX_PIN {RX_PIN}
+#define TX_PIN {TX_PIN}
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+SEEED_MR60BHA2 mmWave;
+
+unsigned long lastMsg = 0;
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void reconnect() {
+  // MQTT 서버 연결 루프
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    String clientId = "ESP32_Radar_Client-";
+    clientId += String(random(0xffff), HEX);
+    
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected to Raspberry Pi Mosquitto Broker!");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  
+  // 센서 통신속도는 115200bps 고정
+  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+  mmWave.begin(&Serial2);
+  
+  setup_wifi();
+  client.setServer(mqtt_server, mqtt_port);
+  
+  Serial.println("Setup Completed.");
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  // 지속적으로 패킷 수신 대기 및 검증
+  if (mmWave.update(100)) {
+    float breath_rate = 0;
+    float heart_rate = 0;
+    float distance = 0;
+    
+    bool has_breath = mmWave.getBreathRate(breath_rate);
+    bool has_heart = mmWave.getHeartRate(heart_rate);
+    bool has_dist = mmWave.getDistance(distance);
+    
+    // 5초 간격으로 라즈베리 파이에 상태 전송
+    unsigned long now = millis();
+    if (now - lastMsg > 5000) {
+      lastMsg = now;
+      
+      // JSON 포맷팅 패킹
+      String payload = "{";
+      payload += "\\\"breath_rate\\\":" + String(has_breath ? breath_rate : 0) + ",";
+      payload += "\\\"heart_rate\\\":" + String(has_heart ? heart_rate : 0) + ",";
+      payload += "\\\"distance\\\":" + String(has_dist ? distance : 0);
+      payload += "}";
+      
+      Serial.print("Publish payload to Raspberry Pi: ");
+      Serial.println(payload);
+      
+      // MQTT 토픽 발행
+      client.publish("radar/vital_signs", payload.c_str());
+    }
+  }
+}`,
+            arduino_lib: `// [XIAO ESP32C6 / MR60BHA2 mmWave] 공식 라이브러리 사용 스케치
+// 아두이노 라이브러리 매니저에서 Seeed_Arduino_mmWave 라이브러리를 설치해 주십시오.
+
+#include <Arduino.h>
+#include <Seeed_Arduino_mmWave.h>
+
+// XIAO ESP32C6의 하드웨어 시리얼 2 (Serial2) 정의
+// D6(TX: GPIO20) & D7(RX: GPIO21) 하드웨어 결선 사용
+#define RX_PIN {RX_PIN}
+#define TX_PIN {TX_PIN}
+
+// mmWave 레이더 제어 클래스 선언
+SEEED_MR60BHA2 mmWave;
+
+void setup() {
+  Serial.begin(115200);
+  while(!Serial);
+  
+  // 센서 통신속도는 115200bps 고정입니다.
+  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+
+  mmWave.begin(&Serial2);
+  Serial.println("XIAO ESP32C6 mmWave Hub initialized!");
+}
+
+void loop() {
+  // 지속적으로 패킷 수신 대기 및 검증
+  if (mmWave.update(100)) {
+    float breath_rate = 0;
+    float heart_rate = 0;
+    float distance = 0;
+    
+    // 호흡수 정보 수집
+    if (mmWave.getBreathRate(breath_rate)) {
+      Serial.print("Breath Rate: ");
+      Serial.print(breath_rate);
+      Serial.println(" rpm");
+    }
+    
+    // 심박수 정보 수집
+    if (mmWave.getHeartRate(heart_rate)) {
+      Serial.print("Heart Rate: ");
+      Serial.print(heart_rate);
+      Serial.println(" bpm");
+    }
+
+    // 거리 정보 수집
+    if (mmWave.getDistance(distance)) {
+      Serial.print("Distance to Target: ");
+      Serial.print(distance);
+      Serial.println(" m");
+    }
+  }
+  delay(10);
+}`,
+            arduino_raw: `// [XIAO ESP32C6 / MR60BHA2] 라이브러리 없이 직접 패킷 디코딩하기
+// 0x53 0x59 헤더 및 체크섬을 안전하게 검증하는 리시버 모듈용 코드입니다.
+
+#include <Arduino.h>
+
+#define RX_PIN {RX_PIN}
+#define TX_PIN {TX_PIN}
+
+uint8_t buffer[64];
+int bufIndex = 0;
+
+void setup() {
+  Serial.begin(115200);
+  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+  Serial.println("XIAO Raw Protocol Reader Ready.");
+}
+
+void parseFrame(uint8_t* pFrame, int len) {
+  uint8_t ctrl = pFrame[2];
+  uint8_t cmd = pFrame[3];
+  uint16_t dataLen = (pFrame[4] << 8) | pFrame[5];
+  uint8_t* data = &pFrame[6];
+  
+  if (ctrl == 0x85) { 
+    if (cmd == 0x02) {
+      Serial.printf("[심박수] %d bpm\\n", data[0]);
+    }
+  } 
+  else if (ctrl == 0x81) {
+    if (cmd == 0x01) {
+      Serial.printf("[호흡수] %d rpm\\n", data[0]);
+    }
+  }
+  else if (ctrl == 0x80) {
+    if (cmd == 0x01) {
+      Serial.printf("[재실감지] %s\\n", data[0] == 1 ? "사람 있음" : "비어 있음");
+    }
+    else if (cmd == 0x04) {
+      uint16_t distanceCm = (data[0] << 8) | data[1];
+      Serial.printf("[거리] 대상 위치: %.2f m\\n", (float)distanceCm / 100.0);
+    }
+  }
+}
+
+void loop() {
+  while (Serial2.available()) {
+    uint8_t c = Serial2.read();
+    
+    if (bufIndex == 0 && c != 0x53) continue; 
+    if (bufIndex == 1 && c != 0x59) { bufIndex = 0; continue; } 
+    
+    buffer[bufIndex++] = c;
+    
+    if (bufIndex >= 10) {
+      if (buffer[bufIndex - 2] == 0x54 && buffer[bufIndex - 1] == 0x43) {
+        
+        // 체크섬 루프 계산
+        uint8_t checksum = 0;
+        for (int i = 0; i < bufIndex - 3; i++) {
+          checksum += buffer[i];
+        }
+        
+        if (checksum == buffer[bufIndex - 3]) {
+          parseFrame(buffer, bufIndex);
+        } else {
+          Serial.println("Warning: Checksum Error");
+        }
+        
+        bufIndex = 0; 
+      }
+    }
+    
+    if (bufIndex >= 64) bufIndex = 0;
+  }
+}`,
+            esphome: `# [XIAO ESP32C6 / MR60BHA2 mmWave] ESPHome 스마트 홈 허브 통합 YAML
+# 홈어시스턴트(Home Assistant)에 연동하여 자동 제어 자동화를 만듭니다.
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/limengdu/MR60BHA2_ESPHome_external_components
+      ref: main
+    components: [ seeed_mr60bha2 ]
+
+uart:
+  id: uart_radar
+  tx_pin: GPIO{TX_PIN}
+  rx_pin: GPIO{RX_PIN}
+  baud_rate: 115200
+  parity: NONE
+  stop_bits: 1
+
+sensor:
+  - platform: seeed_mr60bha2
+    uart_id: uart_radar
+    breath_rate:
+      name: "XIAO 레이더 호흡수"
+      icon: "mdi:lungs"
+      accuracy_decimals: 0
+    heart_rate:
+      name: "XIAO 레이더 심박수"
+      icon: "mdi:heart-pulse"
+      accuracy_decimals: 0
+    distance:
+      name: "XIAO 레이더 감지 거리"
+      icon: "mdi:ruler"
+      unit_of_measurement: "m"
+      accuracy_decimals: 2
+
+binary_sensor:
+  - platform: seeed_mr60bha2
+    uart_id: uart_radar
+    presence:
+      name: "실내 재실 감지"
+      device_class: occupancy
+`,
+            python: `# [XIAO ESP32C6 / MR60BHA2] MicroPython 데이터 파서 예시
+# 라즈베리 파이 피코 또는 ESP32 계열 마이크로파이썬 개발 환경 지원 소스코드
+
+import machine
+import time
+
+# UART 포트 인스턴스화 (XIAO C6 핀 매핑 RX:{RX_PIN}, TX:{TX_PIN})
+uart = machine.UART(1, baudrate=115200, tx={TX_PIN}, rx={RX_PIN}, bits=8, parity=None, stop=1)
+
+print("MicroPython Receiver Active.")
+
+def parse_payload(ctrl, cmd, payload):
+    if ctrl == 0x85 and cmd == 0x02:
+        print("심박수: {} bpm".format(payload[0]))
+    elif ctrl == 0x81 and cmd == 0x01:
+        print("호흡수: {} rpm".format(payload[0]))
+    elif ctrl == 0x80:
+        if cmd == 0x01:
+            print("인체 유무: {}".format("존재함" if payload[0] == 1 else "없음"))
+        elif cmd == 0x04:
+            dist_cm = (payload[0] << 8) | payload[1]
+            print("물체 거리: {:.2f} m".format(dist_cm / 100))
+
+buf = bytearray()
+
+while True:
+    if uart.any():
+        c = uart.read(1)[0]
+        
+        if len(buf) == 0 and c != 0x53:
+            continue
+        if len(buf) == 1 and c != 0x59:
+            buf.clear()
+            continue
+            
+        buf.append(c)
+        
+        if len(buf) >= 10:
+            if buf[-2] == 0x54 and buf[-1] == 0x43:
+                # 체크섬 검산
+                chk = sum(buf[:-3]) & 0xFF
+                if chk == buf[-3]:
+                    ctrl = buf[2]
+                    cmd = buf[3]
+                    length = (buf[4] << 8) | buf[5]
+                    data = buf[6:6+length]
+                    parse_payload(ctrl, cmd, data)
+                else:
+                    print("Packet checksum error.")
+                buf.clear()
+    time.sleep_ms(2)`
+        };
+
+        function generateCode() {
+            const fw = document.getElementById('code-framework').value;
+            const rx = document.getElementById('code-rx-pin').value || '21';
+            const tx = document.getElementById('code-tx-pin').value || '20';
+            
+            let filename = 'sketch.ino';
+            if (fw === 'esp32_wifi_mqtt') filename = 'esp32_wifi_mqtt.ino';
+            if (fw === 'esphome') filename = 'sensor_config.yaml';
+            if (fw === 'python') filename = 'main.py';
+            document.getElementById('code-filename').textContent = filename;
+
+            let code = codeTemplates[fw];
+            code = code.replace(/{RX_PIN}/g, rx).replace(/{TX_PIN}/g, tx);
+
+            let highlighted = code
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/(&quot;.*?&quot;)|(".*?")/g, '<span class="code-string">$1$2</span>')
+                .replace(/(\/\/.*)/g, '<span class="code-comment">$1</span>')
+                .replace(/(#.*)/g, '<span class="code-keyword">$1</span>')
+                .replace(/\b(void|int|float|uint8_t|uint16_t|bytearray|import)\b/g, '<span class="code-type">$1</span>')
+                .replace(/\b(setup|loop|begin|update|getBreathRate|getHeartRate|getDistance|parseFrame|read|available|parse_payload|printf)\b/g, '<span class="code-func">$1</span>');
+
+            document.getElementById('code-output').innerHTML = highlighted;
+        }
+
+        generateCode();
+
+        function copyCode() {
+            const fw = document.getElementById('code-framework').value;
+            const rx = document.getElementById('code-rx-pin').value || '21';
+            const tx = document.getElementById('code-tx-pin').value || '20';
+            let rawCode = codeTemplates[fw].replace(/{RX_PIN}/g, rx).replace(/{TX_PIN}/g, tx);
+
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = rawCode;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            const copyBtn = document.querySelector('.btn-copy');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> 복사 완료!';
+            copyBtn.style.borderColor = '#10b981';
+            copyBtn.style.color = '#10b981';
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                copyBtn.style.color = '#ffffff';
+            }, 2000);
+        }
+
+        // Standalone Checksum Calculator
+        function calculateCustomChecksum() {
+            const rawInput = document.getElementById('calc-input').value.trim();
+            const cleanHex = rawInput.replace(/0x/g, '').replace(/[^0-9A-Fa-f]/g, ' ');
+            const hexArray = cleanHex.split(/\s+/).filter(x => x.length > 0);
+            
+            if (hexArray.length === 0) {
+                document.getElementById('calc-output-checksum').textContent = '0x00';
+                return;
+            }
+            
+            const bytes = hexArray.map(h => parseInt(h, 16));
+            const sum = bytes.reduce((acc, b) => acc + b, 0);
+            const checksumByte = sum & 0xFF;
+            
+            document.getElementById('calc-output-checksum').textContent = `0x${checksumByte.toString(16).toUpperCase().padStart(2, '0')}`;
+        }
+        // Initialize simulations on load
+        calculateCustomChecksum();
+    </script>
+</body>
+</html>
